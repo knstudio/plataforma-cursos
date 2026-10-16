@@ -1,0 +1,38 @@
+/* Ajustes da plataforma sobre o tema Learnplus */
+.layout-fluid .page__container {
+    max-width: 1144px;
+}
+
+.list-group-item.lesson-active {
+    background-color: #dcdcdc;
+}
+
+.list-group-item.lesson-active a {
+    color: rgba(33, 150, 243, .85);
+    font-weight: 500;
+}
+
+.lesson-done-icon {
+    font-size: 18px;
+    vertical-align: middle;
+}
+
+.lesson-nav a:hover {
+    text-decoration: none;
+}
+
+.course-cover {
+    width: 100px;
+    height: 75px;
+    object-fit: cover;
+}
+
+.invalid-feedback {
+    display: block;
+}
+
+/* Lesson Q&A: keep the line breaks typed by students and the teacher */
+.lesson-question__body {
+    white-space: pre-line;
+    word-break: break-word;
+}

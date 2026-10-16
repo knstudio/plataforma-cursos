@@ -1,0 +1,289 @@
+/*
+ * Checkout page, reproducing the layout of julianabaloes.com.br/checkout-treinamento
+ * (originally estilo.css + inline styles).
+ */
+:root {
+    --checkout-brand: rgba(188, 80, 135, 1);
+    --checkout-brand-translucent: rgba(188, 80, 135, 0.8);
+}
+
+body.checkout-page {
+    background: #fff;
+    font-family: 'Montserrat', sans-serif;
+    color: #212529;
+}
+
+/* Fixed countdown bar */
+.checkout-timer {
+    background: var(--checkout-brand-translucent);
+    padding: 10px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    text-align: center;
+    flex-wrap: wrap;
+}
+
+.checkout-timer__clock {
+    font-size: 35px;
+    font-weight: 800;
+    min-width: 195px;
+    margin-right: 27px;
+}
+
+.checkout-timer__icon {
+    font-size: 35px;
+    margin-right: 20px;
+}
+
+.checkout-timer__label {
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.checkout-banner {
+    margin-top: 24px;
+}
+
+.checkout-banner--below-timer {
+    margin-top: 90px;
+}
+
+.checkout-banner img {
+    width: 100%;
+    border-radius: 20px;
+}
+
+@media screen and (max-width: 530px) {
+    .checkout-banner--below-timer {
+        margin-top: 120px;
+    }
+
+    .checkout-timer__clock,
+    .checkout-timer__icon {
+        font-size: 28px;
+    }
+}
+
+/* Payment form (estilo.css) */
+.payment-form {
+    padding-bottom: 50px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.payment-form.dark {
+    background-color: #f6f6f6;
+}
+
+.payment-form form {
+    background-color: #f6f6f6;
+    border-top: 2px solid #5ea4f3;
+    margin: 10px auto 0;
+    padding: 0;
+    max-width: 800px;
+}
+
+.payment-form .products {
+    background-color: #f7fbff;
+    padding: 25px;
+    border: 1px solid rgba(0, 0, 0, .2);
+    box-shadow: 0 2px 10px rgb(0 0 0 / 8%);
+}
+
+.payment-form .products label {
+    font-weight: 400;
+}
+
+.payment-form .products .item {
+    margin-bottom: 1em;
+    padding: 10px;
+}
+
+.payment-form .products .item-description {
+    font-size: 0.8em;
+    opacity: 0.6;
+}
+
+.payment-form .products .item p {
+    margin-bottom: 0.2em;
+}
+
+.payment-form .products .price {
+    float: right;
+    font-weight: 600;
+    font-size: 0.9em;
+    padding-right: 10px;
+    text-align: right;
+}
+
+.payment-form .products .price del {
+    display: block;
+    font-weight: 400;
+    font-size: 0.8em;
+    opacity: 0.6;
+}
+
+.payment-form .products .total {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    margin-top: 10px;
+    padding-top: 19px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.payment-form .card-details {
+    padding: 25px 25px 15px;
+}
+
+.payment-form .card-details button {
+    margin-top: 0.6em;
+    padding: 12px 0;
+    font-weight: 600;
+    border-bottom: 5px solid #000;
+}
+
+.payment-form .checkout-help {
+    font-size: 0.8em;
+}
+
+@media (min-width: 576px) {
+    .payment-form .products {
+        padding: 40px;
+    }
+
+    .payment-form .products .price {
+        font-size: 1em;
+    }
+
+    .payment-form .card-details {
+        padding: 40px 40px 30px;
+    }
+
+    .payment-form .card-details button {
+        margin-top: 2em;
+    }
+}
+
+/* Order bump box */
+.order-bump-box {
+    border: dotted red 4px;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.order-bump-box__title {
+    text-align: center;
+    padding: 5px;
+    margin-bottom: 20px !important;
+    background: #d6d6d6;
+    font-size: 1.2em;
+}
+
+/* Arrow and checkbox side by side, aligned with the first line of the text */
+.order-bump-box__offer {
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    cursor: pointer;
+}
+
+.order-bump-box__pointer {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
+.order-bump-box__pointer img {
+    width: 48px;
+    margin-right: 8px;
+}
+
+.order-bump-box__check {
+    box-shadow: 0 0 0 2px #000;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.order-bump-box__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.order-bump-box__headline {
+    display: block;
+    margin-bottom: 1em;
+    color: red;
+}
+
+.order-bump-box__headline .highlight {
+    background-color: yellow;
+}
+
+.order-bump-box__price {
+    color: green;
+    font-size: 1.4em;
+}
+
+.order-bump-box__hint {
+    display: block;
+    color: blue;
+}
+
+@media (max-width: 575.98px) {
+    .payment-form .products .order-bump-box {
+        padding: 10px 8px;
+    }
+
+    .order-bump-box__title {
+        font-size: 1.05em;
+    }
+
+    .order-bump-box__pointer {
+        margin-right: 8px;
+    }
+
+    .order-bump-box__pointer img {
+        width: 30px;
+        margin-right: 6px;
+    }
+
+    .order-bump-box__hint {
+        font-size: 0.9em;
+    }
+}
+
+/* Trust badges */
+.checkout-badge {
+    border: 1px solid var(--checkout-brand);
+    border-radius: 5px;
+    padding: 12px 14px 8px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.checkout-badge i {
+    color: var(--checkout-brand);
+    font-size: 48px;
+}
+
+.checkout-badge__title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.checkout-badge__text {
+    font-size: 0.8em;
+    color: var(--checkout-brand);
+    margin-top: 10px;
+}
+
+.payment-form .invalid-feedback {
+    display: block;
+}
