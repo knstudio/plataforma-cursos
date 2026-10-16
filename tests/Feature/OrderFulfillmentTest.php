@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Notifications\AccessGranted;
 use App\Services\OrderFulfillment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -81,6 +82,28 @@ class OrderFulfillmentTest extends TestCase
         $this->fulfillment->reverse($order, OrderStatus::Refunded);
 
         $this->assertTrue($student->canAccessCourse($course));
+    }
+
+    public function test_simultaneous_notifications_approve_and_email_only_once(): void
+    {
+        [$order] = $this->orderFor(accessDays: null);
+        // Second notification loaded the order before the first one approved it.
+        $staleCopy = Order::query()->findOrFail($order->id);
+
+        $this->assertTrue($this->fulfillment->approve($order));
+        $this->assertFalse($this->fulfillment->approve($staleCopy));
+
+        Notification::assertSentToTimes($order->user, AccessGranted::class, 1);
+        $this->assertSame(OrderStatus::Approved, $staleCopy->status);
+    }
+
+    public function test_mail_failure_does_not_undo_the_access(): void
+    {
+        [$order, $course] = $this->orderFor(accessDays: null);
+        Notification::shouldReceive('send')->andThrow(new \RuntimeException('SMTP fora do ar'));
+
+        $this->assertTrue($this->fulfillment->approve($order));
+        $this->assertTrue($order->user->canAccessCourse($course));
     }
 
     public function test_cancel_does_not_touch_an_approved_order(): void

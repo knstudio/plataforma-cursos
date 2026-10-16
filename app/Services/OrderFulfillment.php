@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Notifications\AccessGranted;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * Single place where a payment status turns into access (or loss of access).
@@ -27,16 +28,38 @@ class OrderFulfillment
             return false;
         }
 
-        DB::transaction(function () use ($order, $paidAt): void {
+        // Mercado Pago sends several notifications for the same payment at the same
+        // moment: the row lock makes the later ones wait and see the order approved.
+        $approved = DB::transaction(function () use ($order, $paidAt): bool {
+            $current = Order::query()->lockForUpdate()->findOrFail($order->id);
+
+            if ($current->status === OrderStatus::Approved) {
+                $order->setRawAttributes($current->getAttributes(), true);
+
+                return false;
+            }
+
             $order->update([
                 'status' => OrderStatus::Approved,
                 'paid_at' => $paidAt ?? now(),
             ]);
 
             $this->grantCourses($order);
+
+            return true;
         });
 
-        $order->user->notify(new AccessGranted($order));
+        if (! $approved) {
+            return false;
+        }
+
+        // Access is already granted: a mail failure must not make the gateway retry
+        // (the retry would find the order approved and never send the e-mail).
+        try {
+            $order->user->notify(new AccessGranted($order));
+        } catch (Throwable $exception) {
+            report($exception);
+        }
 
         return true;
     }
