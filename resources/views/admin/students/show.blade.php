@@ -217,6 +217,25 @@
                     </form>
                 </div>
             </div>
+
+            @unless ($student->is(auth()->user()))
+                <div class="card border-danger">
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('admin.students.destroy', $student) }}"
+                              onsubmit="return confirm('Excluir {{ addslashes($student->name) }}?\n\nApaga também os acessos, {{ $student->orders->count() }} pedido(s), o progresso e as perguntas. Não dá para desfazer.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger btn-block">
+                                <i class="material-icons btn__icon--left">delete</i> Excluir aluno
+                            </button>
+                        </form>
+                        <small class="text-muted d-block mt-2">
+                            Apaga o aluno com acessos, pedidos, progresso e perguntas.
+                            Para só tirar o acesso a um curso, use o cadeado na lista de cursos acima.
+                        </small>
+                    </div>
+                </div>
+            @endunless
         </div>
     </div>
 @endsection

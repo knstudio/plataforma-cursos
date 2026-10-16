@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -147,5 +148,40 @@ class AdminStudentTest extends TestCase
             ->assertSessionHas('status');
 
         Notification::assertSentTo($student, ResetPassword::class);
+    }
+
+    public function test_admin_can_delete_a_student_with_everything_tied_to_them(): void
+    {
+        $student = User::factory()->create();
+        $enrollment = Enrollment::factory()->for($student)->create();
+        $order = Order::factory()->for($student)->create();
+
+        $this->actingAs($this->admin)->get(route('admin.students.show', $student))
+            ->assertSee('Excluir aluno');
+
+        $this->actingAs($this->admin)->delete(route('admin.students.destroy', $student))
+            ->assertRedirect(route('admin.students.index'));
+
+        $this->assertModelMissing($student);
+        $this->assertModelMissing($enrollment);
+        $this->assertModelMissing($order);
+    }
+
+    public function test_admin_cannot_delete_own_account(): void
+    {
+        $this->actingAs($this->admin)->delete(route('admin.students.destroy', $this->admin))
+            ->assertForbidden();
+
+        $this->assertModelExists($this->admin);
+    }
+
+    public function test_students_cannot_delete_students(): void
+    {
+        $other = User::factory()->create();
+
+        $this->actingAs(User::factory()->create())->delete(route('admin.students.destroy', $other))
+            ->assertForbidden();
+
+        $this->assertModelExists($other);
     }
 }

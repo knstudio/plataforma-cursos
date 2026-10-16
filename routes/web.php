@@ -102,6 +102,7 @@ Route::middleware('auth')->group(function () {
         Route::post('alunos', [Admin\StudentController::class, 'store'])->name('students.store');
         Route::get('alunos/{student}', [Admin\StudentController::class, 'show'])->name('students.show');
         Route::put('alunos/{student}', [Admin\StudentController::class, 'update'])->name('students.update');
+        Route::delete('alunos/{student}', [Admin\StudentController::class, 'destroy'])->name('students.destroy');
         Route::post('alunos/{student}/link-senha', [Admin\StudentController::class, 'sendPasswordLink'])->name('students.password-link');
 
         Route::post('alunos/{student}/matriculas', [Admin\EnrollmentController::class, 'store'])->name('enrollments.store');

@@ -110,6 +110,23 @@ class StudentController extends Controller
         return redirect()->route('admin.students.show', $student)->with('status', 'Dados do aluno atualizados.');
     }
 
+    /**
+     * Removes the student with everything tied to them: accesses, orders,
+     * progress and questions (the database cascades take care of it).
+     */
+    public function destroy(Request $request, User $student): RedirectResponse
+    {
+        abort_if($student->is($request->user()), 403, 'Você não pode excluir a sua própria conta.');
+
+        DB::transaction(function () use ($student): void {
+            DB::table('sessions')->where('user_id', $student->id)->delete();
+            DB::table('password_reset_tokens')->where('email', $student->email)->delete();
+            $student->delete();
+        });
+
+        return redirect()->route('admin.students.index')->with('status', "Aluno {$student->name} excluído.");
+    }
+
     public function sendPasswordLink(User $student): RedirectResponse
     {
         $status = Password::sendResetLink(['email' => $student->email]);
