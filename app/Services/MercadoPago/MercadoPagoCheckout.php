@@ -64,6 +64,12 @@ class MercadoPagoCheckout
     {
         $url = config('services.mercadopago.notification_url') ?: route('webhooks.mercadopago');
 
-        return str_starts_with($url, 'https://') ? $url : null;
+        if (! str_starts_with($url, 'https://')) {
+            return null;
+        }
+
+        // Without it, Mercado Pago also sends the legacy IPN format (topic=payment and
+        // topic=merchant_order) for the same payment, multiplying the notifications.
+        return $url.(str_contains($url, '?') ? '&' : '?').'source_news=webhooks';
     }
 }

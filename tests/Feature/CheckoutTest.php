@@ -153,6 +153,21 @@ class CheckoutTest extends TestCase
         });
     }
 
+    public function test_notifications_are_requested_only_in_webhooks_format(): void
+    {
+        config(['services.mercadopago.notification_url' => 'https://cursos.example.com/webhooks/mercadopago']);
+        Http::fake(['api.mercadopago.com/*' => Http::response(['id' => 'p', 'init_point' => 'https://mp.test/pay'], 201)]);
+
+        $this->post(route('checkout.store', $this->product), [
+            'name' => 'João',
+            'email' => 'joao@example.com',
+            'email_confirmation' => 'joao@example.com',
+            'phone' => '11988887777',
+        ]);
+
+        Http::assertSent(fn (Request $request) => $request['notification_url'] === 'https://cursos.example.com/webhooks/mercadopago?source_news=webhooks');
+    }
+
     public function test_checkout_without_bump_charges_only_main_product(): void
     {
         Http::fake(['api.mercadopago.com/*' => Http::response(['id' => 'p', 'init_point' => 'https://mp.test/pay'], 201)]);
