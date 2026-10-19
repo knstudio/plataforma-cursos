@@ -7,7 +7,7 @@
     <div class="d-flex align-items-center text-muted small mb-1 ml-4">
         <i class="material-icons mr-1" style="font-size: 16px">schedule</i>
         <span class="mr-2">esperar</span>
-        @include('admin.funis._espera', ['campo' => 'espera', 'minutos' => $mensagem->espera_min, 'id' => 'espera-'.$mensagem->id, 'form' => $formId])
+        @include('admin.funis._espera', ['campo' => 'espera', 'segundos' => $mensagem->espera_seg, 'id' => 'espera-'.$mensagem->id, 'form' => $formId])
         <span class="ml-2">{{ $indice === 0 ? 'depois do início do bloco' : 'depois da mensagem anterior' }}</span>
     </div>
 

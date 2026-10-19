@@ -28,8 +28,8 @@ class FunilBlocoController extends Controller
         $bloco = $funil->blocos()->create([
             'product_id' => $data['product_id'],
             'posicao' => (int) $funil->blocos()->max('posicao') + 1,
-            'espera_inicio_min' => $primeiro ? 0 : 1440,
-            'espera_se_comprou_min' => $primeiro ? null : 30,
+            'espera_inicio_seg' => $primeiro ? 0 : 86400,
+            'espera_se_comprou_seg' => $primeiro ? null : 1800,
             'ativo' => true,
         ]);
 

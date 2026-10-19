@@ -3,51 +3,58 @@
 namespace App\Enums;
 
 /**
- * Unit of the funnel waiting times. They are stored in minutes; the admin
+ * Unit of the funnel waiting times. They are stored in seconds; the admin
  * shows them in the largest unit that divides them exactly.
  */
 enum EsperaUnidade: string
 {
+    case Segundos = 'seg';
     case Minutos = 'min';
     case Horas = 'horas';
     case Dias = 'dias';
 
-    public function minutos(): int
+    public function segundos(): int
     {
         return match ($this) {
-            self::Minutos => 1,
-            self::Horas => 60,
-            self::Dias => 1440,
+            self::Segundos => 1,
+            self::Minutos => 60,
+            self::Horas => 3600,
+            self::Dias => 86400,
         };
     }
 
-    public function paraMinutos(int $valor): int
+    public function paraSegundos(int $valor): int
     {
-        return $valor * $this->minutos();
+        return $valor * $this->segundos();
     }
 
     /**
      * @return array{0: int, 1: self}
      */
-    public static function separar(int $minutos): array
+    public static function separar(int $segundos): array
     {
-        foreach ([self::Dias, self::Horas] as $unidade) {
-            if ($minutos > 0 && $minutos % $unidade->minutos() === 0) {
-                return [intdiv($minutos, $unidade->minutos()), $unidade];
+        if ($segundos === 0) {
+            return [0, self::Minutos];
+        }
+
+        foreach ([self::Dias, self::Horas, self::Minutos] as $unidade) {
+            if ($segundos % $unidade->segundos() === 0) {
+                return [intdiv($segundos, $unidade->segundos()), $unidade];
             }
         }
 
-        return [$minutos, self::Minutos];
+        return [$segundos, self::Segundos];
     }
 
     /**
-     * "3 min", "1 hora", "2 dias".
+     * "30 seg", "3 min", "1 hora", "2 dias".
      */
-    public static function descrever(int $minutos): string
+    public static function descrever(int $segundos): string
     {
-        [$valor, $unidade] = self::separar($minutos);
+        [$valor, $unidade] = self::separar($segundos);
 
         return $valor.' '.match ($unidade) {
+            self::Segundos => 'seg',
             self::Minutos => 'min',
             self::Horas => $valor === 1 ? 'hora' : 'horas',
             self::Dias => $valor === 1 ? 'dia' : 'dias',

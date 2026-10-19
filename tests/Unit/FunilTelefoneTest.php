@@ -35,13 +35,15 @@ class FunilTelefoneTest extends TestCase
 
     public function test_wait_times_use_the_largest_exact_unit(): void
     {
-        $this->assertSame([3, EsperaUnidade::Minutos], EsperaUnidade::separar(3));
-        $this->assertSame([20, EsperaUnidade::Horas], EsperaUnidade::separar(1200));
-        $this->assertSame([1, EsperaUnidade::Dias], EsperaUnidade::separar(1440));
-        $this->assertSame([90, EsperaUnidade::Minutos], EsperaUnidade::separar(90));
+        $this->assertSame([30, EsperaUnidade::Segundos], EsperaUnidade::separar(30));
+        $this->assertSame([3, EsperaUnidade::Minutos], EsperaUnidade::separar(180));
+        $this->assertSame([20, EsperaUnidade::Horas], EsperaUnidade::separar(72000));
+        $this->assertSame([1, EsperaUnidade::Dias], EsperaUnidade::separar(86400));
+        $this->assertSame([90, EsperaUnidade::Segundos], EsperaUnidade::separar(90));
         $this->assertSame([0, EsperaUnidade::Minutos], EsperaUnidade::separar(0));
-        $this->assertSame('1 dia', EsperaUnidade::descrever(1440));
-        $this->assertSame('20 horas', EsperaUnidade::descrever(1200));
-        $this->assertSame(2880, EsperaUnidade::Dias->paraMinutos(2));
+        $this->assertSame('30 seg', EsperaUnidade::descrever(30));
+        $this->assertSame('1 dia', EsperaUnidade::descrever(86400));
+        $this->assertSame('20 horas', EsperaUnidade::descrever(72000));
+        $this->assertSame(172800, EsperaUnidade::Dias->paraSegundos(2));
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * Funnel waits typed as a number plus a unit ({field}_valor + {field}_unidade),
- * stored in minutes.
+ * stored in seconds.
  */
 trait ParsesWaitTimes
 {
@@ -22,10 +22,10 @@ trait ParsesWaitTimes
         ];
     }
 
-    protected function waitMinutes(string $field): int
+    protected function waitSeconds(string $field): int
     {
-        $unidade = EsperaUnidade::tryFrom((string) $this->validated($field.'_unidade')) ?? EsperaUnidade::Minutos;
+        $unidade = EsperaUnidade::tryFrom((string) $this->validated($field.'_unidade')) ?? EsperaUnidade::Segundos;
 
-        return $unidade->paraMinutos((int) $this->validated($field.'_valor'));
+        return $unidade->paraSegundos((int) $this->validated($field.'_valor'));
     }
 }

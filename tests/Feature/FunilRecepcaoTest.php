@@ -36,7 +36,7 @@ class FunilRecepcaoTest extends TestCase
 
         $this->funil = Funil::factory()->create(['slug' => 'ebook-arte-baloes', 'instancia' => 'bubbles']);
         $this->formulario = FunilGatilho::factory()->for($this->funil)->create();
-        $this->bloco = FunilBloco::factory()->for($this->funil)->create(['espera_inicio_min' => 60]);
+        $this->bloco = FunilBloco::factory()->for($this->funil)->create(['espera_inicio_seg' => 3600]);
     }
 
     public function test_form_creates_the_contact_and_asks_for_confirmation(): void

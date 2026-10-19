@@ -37,7 +37,7 @@ class FunilMensagemRequest extends FormRequest
     {
         return [
             'texto' => $this->validated('texto'),
-            'espera_min' => $this->waitMinutes('espera'),
+            'espera_seg' => $this->waitSeconds('espera'),
             'product_offer_id' => $this->validated('product_offer_id'),
             'ativo' => $this->validated('ativo'),
         ];

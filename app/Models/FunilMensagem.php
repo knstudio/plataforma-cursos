@@ -9,10 +9,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A message of a block. espera_min counts from the previous message (the
+ * A message of a block. espera_seg counts from the previous message (the
  * first one, from the block start). The offer gives {preco} and {link}.
  */
-#[Fillable(['bloco_id', 'ordem', 'espera_min', 'product_offer_id', 'texto', 'ativo'])]
+#[Fillable(['bloco_id', 'ordem', 'espera_seg', 'product_offer_id', 'texto', 'ativo'])]
 class FunilMensagem extends Model
 {
     /** @use HasFactory<FunilMensagemFactory> */
@@ -27,7 +27,7 @@ class FunilMensagem extends Model
     {
         return [
             'ordem' => 'integer',
-            'espera_min' => 'integer',
+            'espera_seg' => 'integer',
             'ativo' => 'boolean',
         ];
     }

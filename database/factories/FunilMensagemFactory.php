@@ -21,7 +21,7 @@ class FunilMensagemFactory extends Factory
         return [
             'bloco_id' => FunilBloco::factory(),
             'ordem' => 1,
-            'espera_min' => 0,
+            'espera_seg' => 0,
             'product_offer_id' => null,
             'texto' => 'Oi, {primeiro_nome}! Conheça o {produto} por R$ {preco}: {link}',
             'ativo' => true,

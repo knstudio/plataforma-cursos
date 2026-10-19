@@ -68,7 +68,7 @@ class FunilAdminTest extends TestCase
         $product = Product::factory()->create(['name' => 'Treinamento Essencial', 'slug' => 'essencial', 'price' => 17]);
         $offer = ProductOffer::factory()->for($product)->create(['name' => 'Whats 17', 'code' => 'whats', 'price' => 17]);
         $bloco = FunilBloco::factory()->for($funil)->for($product)->create();
-        FunilMensagem::factory()->create(['bloco_id' => $bloco->id, 'product_offer_id' => $offer->id, 'espera_min' => 1200]);
+        FunilMensagem::factory()->create(['bloco_id' => $bloco->id, 'product_offer_id' => $offer->id, 'espera_seg' => 72000]);
         FunilGatilho::factory()->for($funil)->create();
 
         $this->actingAs($this->admin)->get(route('admin.funis.edit', $funil))
@@ -131,8 +131,8 @@ class FunilAdminTest extends TestCase
 
         [$primeiro, $segundo] = $funil->blocos()->get()->all();
         $this->assertSame([1, 2], [$primeiro->posicao, $segundo->posicao]);
-        $this->assertSame(0, $primeiro->espera_inicio_min);
-        $this->assertSame([1440, 30], [$segundo->espera_inicio_min, $segundo->espera_se_comprou_min]);
+        $this->assertSame(0, $primeiro->espera_inicio_seg);
+        $this->assertSame([86400, 1800], [$segundo->espera_inicio_seg, $segundo->espera_se_comprou_seg]);
 
         $this->actingAs($this->admin)->put(route('admin.funil-blocos.update', $segundo), [
             'product_id' => $produto->id,
@@ -142,8 +142,8 @@ class FunilAdminTest extends TestCase
         ])->assertRedirect(route('admin.funis.edit', $funil).'#bloco-'.$segundo->id);
 
         $segundo->refresh();
-        $this->assertSame(2880, $segundo->espera_inicio_min);
-        $this->assertNull($segundo->espera_se_comprou_min);
+        $this->assertSame(172800, $segundo->espera_inicio_seg);
+        $this->assertNull($segundo->espera_se_comprou_seg);
     }
 
     public function test_deactivating_a_block_releases_its_contacts(): void
@@ -196,17 +196,17 @@ class FunilAdminTest extends TestCase
 
         [$primeira, $segunda] = $bloco->mensagens()->get()->all();
         $this->assertSame($offer->id, $primeira->product_offer_id);
-        $this->assertSame([0, 1440], [$primeira->espera_min, $segunda->espera_min]);
+        $this->assertSame([0, 86400], [$primeira->espera_seg, $segunda->espera_seg]);
 
         $this->actingAs($this->admin)->put(route('admin.funil-mensagens.update', $segunda), [
             'texto' => 'Última chance, {primeiro_nome}!',
-            'espera_valor' => 20, 'espera_unidade' => 'horas',
+            'espera_valor' => 45, 'espera_unidade' => 'seg',
             'product_offer_id' => '',
             'ativo' => '1',
         ])->assertSessionHasNoErrors();
 
         $segunda->refresh();
-        $this->assertSame(1200, $segunda->espera_min);
+        $this->assertSame(45, $segunda->espera_seg);
         $this->assertNull($segunda->product_offer_id);
 
         $this->actingAs($this->admin)->patch(route('admin.funil-mensagens.move', $segunda), ['direcao' => 'cima']);

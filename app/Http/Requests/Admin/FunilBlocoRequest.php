@@ -38,8 +38,8 @@ class FunilBlocoRequest extends FormRequest
     {
         return [
             'product_id' => $this->validated('product_id'),
-            'espera_inicio_min' => $this->waitMinutes('espera_inicio'),
-            'espera_se_comprou_min' => $this->validated('usa_espera_compra') ? $this->waitMinutes('espera_compra') : null,
+            'espera_inicio_seg' => $this->waitSeconds('espera_inicio'),
+            'espera_se_comprou_seg' => $this->validated('usa_espera_compra') ? $this->waitSeconds('espera_compra') : null,
             'ativo' => $this->validated('ativo'),
         ];
     }

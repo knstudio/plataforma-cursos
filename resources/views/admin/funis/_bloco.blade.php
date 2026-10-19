@@ -5,7 +5,7 @@
     $product = $bloco->product;
     $precos = $bloco->mensagens->where('ativo', true)->map(fn ($mensagem) => $mensagem->offer?->price)->filter()->unique()->map(fn ($preco) => FunilTexto::preco($preco));
     $primeiro = $numero === 1;
-    $usaEsperaCompra = $bloco->espera_se_comprou_min !== null;
+    $usaEsperaCompra = $bloco->espera_se_comprou_seg !== null;
 @endphp
 <div class="card mb-3 js-bloco" id="bloco-{{ $bloco->id }}" data-id="{{ $bloco->id }}"
      data-produto="{{ $product?->name }}"
@@ -25,9 +25,9 @@
                 @if (! $bloco->ativo)
                     Bloco desativado
                 @else
-                    Começa {{ EsperaUnidade::descrever($bloco->espera_inicio_min) }} {{ $primeiro ? 'após a entrada no funil' : 'após o bloco anterior' }}
+                    Começa {{ EsperaUnidade::descrever($bloco->espera_inicio_seg) }} {{ $primeiro ? 'após a entrada no funil' : 'após o bloco anterior' }}
                     @if (! $primeiro && $usaEsperaCompra)
-                        · {{ EsperaUnidade::descrever($bloco->espera_se_comprou_min) }} se comprou o anterior
+                        · {{ EsperaUnidade::descrever($bloco->espera_se_comprou_seg) }} se comprou o anterior
                     @endif
                 @endif
             </div>
@@ -56,14 +56,14 @@
                     </div>
                     <div class="form-group col-md-4">
                         <label class="form-label" for="espera-inicio-{{ $bloco->id }}">{{ $primeiro ? 'Começa após a entrada' : 'Começa após o bloco anterior' }}</label>
-                        @include('admin.funis._espera', ['campo' => 'espera_inicio', 'minutos' => $bloco->espera_inicio_min, 'id' => 'espera-inicio-'.$bloco->id])
+                        @include('admin.funis._espera', ['campo' => 'espera_inicio', 'segundos' => $bloco->espera_inicio_seg, 'id' => 'espera-inicio-'.$bloco->id])
                     </div>
                     <div class="form-group col-md-4 {{ $primeiro ? 'd-none' : '' }}">
                         <div class="custom-control custom-checkbox mb-1">
                             <input type="checkbox" class="custom-control-input" id="usa-compra-{{ $bloco->id }}" name="usa_espera_compra" value="1" @checked($usaEsperaCompra)>
                             <label class="custom-control-label form-label" for="usa-compra-{{ $bloco->id }}">Se comprou o produto anterior</label>
                         </div>
-                        @include('admin.funis._espera', ['campo' => 'espera_compra', 'minutos' => $bloco->espera_se_comprou_min ?? 30, 'id' => 'espera-compra-'.$bloco->id])
+                        @include('admin.funis._espera', ['campo' => 'espera_compra', 'segundos' => $bloco->espera_se_comprou_seg ?? 1800, 'id' => 'espera-compra-'.$bloco->id])
                     </div>
                 </div>
                 <div class="d-flex flex-wrap align-items-center">

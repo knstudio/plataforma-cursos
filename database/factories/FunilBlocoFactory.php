@@ -23,8 +23,8 @@ class FunilBlocoFactory extends Factory
             'funil_id' => Funil::factory(),
             'posicao' => 1,
             'product_id' => Product::factory(),
-            'espera_inicio_min' => 0,
-            'espera_se_comprou_min' => null,
+            'espera_inicio_seg' => 0,
+            'espera_se_comprou_seg' => null,
             'ativo' => true,
         ];
     }

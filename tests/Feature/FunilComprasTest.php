@@ -48,7 +48,7 @@ class FunilComprasTest extends TestCase
 
         $posVenda = Funil::factory()->create();
         $gatilho = FunilGatilho::factory()->compra($this->essencial)->for($posVenda)->create();
-        $primeiroBloco = FunilBloco::factory()->for($posVenda)->create(['espera_inicio_min' => 30]);
+        $primeiroBloco = FunilBloco::factory()->for($posVenda)->create(['espera_inicio_seg' => 1800]);
 
         $this->aprovar(Order::factory()->for($user)->pending()->create(['product_id' => $this->essencial->id]));
 

@@ -9,4 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Needs the server cron: * * * * * php artisan schedule:run
-Schedule::command('funil:disparar')->everyFiveMinutes()->withoutOverlapping()->runInBackground();
+// Every 10 seconds, so a message due now goes out within seconds.
+Schedule::command('funil:disparar')->everyTenSeconds()->withoutOverlapping();

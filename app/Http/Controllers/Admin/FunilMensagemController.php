@@ -26,7 +26,7 @@ class FunilMensagemController extends Controller
 
         $bloco->mensagens()->create([
             'ordem' => $ultimaOrdem + 1,
-            'espera_min' => $ultimaOrdem > 0 ? 1440 : 0,
+            'espera_seg' => $ultimaOrdem > 0 ? 86400 : 0,
             'product_offer_id' => $bloco->product?->offers()->where('is_active', true)->value('id'),
             'texto' => self::TEXTO_INICIAL,
             'ativo' => true,

@@ -162,7 +162,7 @@ class FunilDisparador
 
         $inscricao->update([
             'ultima_ordem_enviada' => $mensagem->ordem,
-            'proximo_envio_em' => now()->addMinutes($seguinte?->espera_min ?? 0),
+            'proximo_envio_em' => now()->addSeconds($seguinte?->espera_seg ?? 0),
         ]);
     }
 
@@ -189,13 +189,13 @@ class FunilDisparador
         }
 
         $espera = $comprou
-            ? ($proximo->espera_se_comprou_min ?? $proximo->espera_inicio_min)
-            : $proximo->espera_inicio_min;
+            ? ($proximo->espera_se_comprou_seg ?? $proximo->espera_inicio_seg)
+            : $proximo->espera_inicio_seg;
 
         $inscricao->update([
             'bloco_atual_id' => $proximo->id,
             'ultima_ordem_enviada' => 0,
-            'proximo_envio_em' => now()->addMinutes($espera + $proximo->esperaPrimeiraMensagem()),
+            'proximo_envio_em' => now()->addSeconds($espera + $proximo->esperaPrimeiraMensagem()),
         ]);
     }
 

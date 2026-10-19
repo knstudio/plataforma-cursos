@@ -53,7 +53,7 @@ class FunilDisparadorTest extends TestCase
 
         $this->bloco1 = FunilBloco::factory()->for($this->funil)->for($this->essencial)->create(['posicao' => 1]);
         $this->bloco2 = FunilBloco::factory()->for($this->funil)->for($this->bubbles)->create([
-            'posicao' => 2, 'espera_inicio_min' => 1440, 'espera_se_comprou_min' => 30,
+            'posicao' => 2, 'espera_inicio_seg' => 86400, 'espera_se_comprou_seg' => 1800,
         ]);
     }
 
@@ -61,7 +61,7 @@ class FunilDisparadorTest extends TestCase
     {
         $offer = ProductOffer::factory()->for($this->essencial)->create(['code' => 'whats', 'price' => 17]);
         FunilMensagem::factory()->create(['bloco_id' => $this->bloco1->id, 'ordem' => 1, 'product_offer_id' => $offer->id]);
-        FunilMensagem::factory()->create(['bloco_id' => $this->bloco1->id, 'ordem' => 2, 'espera_min' => 180]);
+        FunilMensagem::factory()->create(['bloco_id' => $this->bloco1->id, 'ordem' => 2, 'espera_seg' => 15]);
         $inscricao = $this->inscricao(['nome' => 'MARIA da Silva', 'telefone' => '5582999990000']);
 
         $this->artisan('funil:disparar')->assertSuccessful();
@@ -73,7 +73,7 @@ class FunilDisparadorTest extends TestCase
 
         $inscricao->refresh();
         $this->assertSame(1, $inscricao->ultima_ordem_enviada);
-        $this->assertEqualsWithDelta(now()->addMinutes(180)->timestamp, $inscricao->proximo_envio_em->timestamp, 5);
+        $this->assertEqualsWithDelta(now()->addSeconds(15)->timestamp, $inscricao->proximo_envio_em->timestamp, 5);
         $this->assertDatabaseHas('funil_envios', ['inscricao_id' => $inscricao->id, 'status' => FunilEnvio::STATUS_ENVIADO]);
     }
 
@@ -90,7 +90,7 @@ class FunilDisparadorTest extends TestCase
     public function test_after_the_last_message_moves_to_the_next_block(): void
     {
         FunilMensagem::factory()->create(['bloco_id' => $this->bloco1->id, 'ordem' => 1]);
-        FunilMensagem::factory()->create(['bloco_id' => $this->bloco2->id, 'ordem' => 1, 'espera_min' => 10]);
+        FunilMensagem::factory()->create(['bloco_id' => $this->bloco2->id, 'ordem' => 1, 'espera_seg' => 600]);
         $inscricao = $this->inscricao(estado: ['ultima_ordem_enviada' => 1]);
 
         $this->artisan('funil:disparar')->assertSuccessful();
@@ -99,7 +99,7 @@ class FunilDisparadorTest extends TestCase
         $inscricao->refresh();
         $this->assertSame($this->bloco2->id, $inscricao->bloco_atual_id);
         $this->assertSame(0, $inscricao->ultima_ordem_enviada);
-        $this->assertEqualsWithDelta(now()->addMinutes(1440 + 10)->timestamp, $inscricao->proximo_envio_em->timestamp, 5);
+        $this->assertEqualsWithDelta(now()->addSeconds(86400 + 600)->timestamp, $inscricao->proximo_envio_em->timestamp, 5);
     }
 
     public function test_contact_who_bought_the_block_product_skips_it_with_the_purchase_wait(): void
@@ -115,7 +115,7 @@ class FunilDisparadorTest extends TestCase
         Http::assertNothingSent();
         $inscricao->refresh();
         $this->assertSame($this->bloco2->id, $inscricao->bloco_atual_id);
-        $this->assertEqualsWithDelta(now()->addMinutes(30)->timestamp, $inscricao->proximo_envio_em->timestamp, 5);
+        $this->assertEqualsWithDelta(now()->addSeconds(1800)->timestamp, $inscricao->proximo_envio_em->timestamp, 5);
     }
 
     public function test_pending_order_does_not_count_as_bought(): void
@@ -135,7 +135,7 @@ class FunilDisparadorTest extends TestCase
         $inscricao = $this->inscricao(estado: ['bloco_atual_id' => $this->bloco2->id]);
 
         $outroFunil = Funil::factory()->create(['prioridade' => 5]);
-        $outroBloco = FunilBloco::factory()->for($outroFunil)->create(['espera_inicio_min' => 60]);
+        $outroBloco = FunilBloco::factory()->for($outroFunil)->create(['espera_inicio_seg' => 3600]);
         $baixa = FunilInscricao::factory()->create([
             'contato_id' => $inscricao->contato_id,
             'funil_id' => Funil::factory()->create(['prioridade' => 1])->id,

@@ -11,10 +11,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One product of the platform inside a funnel, with its messages.
- * espera_inicio_min: wait after the previous block (first block: after entry).
- * espera_se_comprou_min: wait when the previous block's product was bought (null = espera_inicio_min).
+ * espera_inicio_seg: wait after the previous block (first block: after entry).
+ * espera_se_comprou_seg: wait when the previous block's product was bought (null = espera_inicio_seg).
  */
-#[Fillable(['funil_id', 'posicao', 'product_id', 'espera_inicio_min', 'espera_se_comprou_min', 'ativo'])]
+#[Fillable(['funil_id', 'posicao', 'product_id', 'espera_inicio_seg', 'espera_se_comprou_seg', 'ativo'])]
 class FunilBloco extends Model
 {
     /** @use HasFactory<FunilBlocoFactory> */
@@ -29,8 +29,8 @@ class FunilBloco extends Model
     {
         return [
             'posicao' => 'integer',
-            'espera_inicio_min' => 'integer',
-            'espera_se_comprou_min' => 'integer',
+            'espera_inicio_seg' => 'integer',
+            'espera_se_comprou_seg' => 'integer',
             'ativo' => 'boolean',
         ];
     }
@@ -68,10 +68,10 @@ class FunilBloco extends Model
     }
 
     /**
-     * The first message's own wait, added when a contact arrives at the block.
+     * The first message's own wait (seconds), added when a contact arrives at the block.
      */
     public function esperaPrimeiraMensagem(): int
     {
-        return (int) $this->mensagens()->where('ativo', true)->value('espera_min');
+        return (int) $this->mensagens()->where('ativo', true)->value('espera_seg');
     }
 }

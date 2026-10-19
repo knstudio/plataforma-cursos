@@ -141,7 +141,7 @@ class FunilAgenda
             'status' => FunilInscricaoStatus::NoFunil,
             'bloco_atual_id' => $bloco->id,
             'ultima_ordem_enviada' => 0,
-            'proximo_envio_em' => now()->addMinutes($bloco->espera_inicio_min + $bloco->esperaPrimeiraMensagem()),
+            'proximo_envio_em' => now()->addSeconds($bloco->espera_inicio_seg + $bloco->esperaPrimeiraMensagem()),
         ]);
     }
 }
