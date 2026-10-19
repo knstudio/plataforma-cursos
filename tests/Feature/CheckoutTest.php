@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\OrderStatus;
 use App\Models\Course;
 use App\Models\Order;
+use App\Models\OrderBump;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
@@ -24,6 +25,8 @@ class CheckoutTest extends TestCase
 
     private Product $bump;
 
+    private OrderBump $orderBump;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -37,10 +40,9 @@ class CheckoutTest extends TestCase
             'name' => 'Treinamento Essencial',
             'slug' => 'treinamento-essencial',
             'price' => 17,
-            'order_bump_product_id' => $this->bump->id,
-            'order_bump_price' => 12,
         ]);
         $this->product->courses()->attach(Course::factory()->create());
+        $this->orderBump = $this->product->orderBumps()->create(['bump_product_id' => $this->bump->id, 'price' => 12]);
     }
 
     public function test_checkout_page_shows_product_and_order_bump(): void
@@ -58,9 +60,9 @@ class CheckoutTest extends TestCase
         Setting::store(['facebook_pixel_ids' => '111222333']);
         $this->product->update([
             'checkout_timer_minutes' => 20,
-            'order_bump_headline' => 'Quero essa *OPORTUNIDADE ÚNICA*',
             'facebook_pixel_ids' => '444555666',
         ]);
+        $this->orderBump->update(['headline' => 'Quero essa *OPORTUNIDADE ÚNICA*']);
 
         $this->get(route('checkout.show', $this->product))
             ->assertOk()
@@ -91,7 +93,7 @@ class CheckoutTest extends TestCase
 
     public function test_order_bump_headline_is_escaped(): void
     {
-        $this->product->update(['order_bump_headline' => '<script>alert(1)</script> *oferta*']);
+        $this->orderBump->update(['headline' => '<script>alert(1)</script> *oferta*']);
 
         $this->get(route('checkout.show', $this->product))
             ->assertOk()
@@ -129,7 +131,7 @@ class CheckoutTest extends TestCase
             'email' => 'Maria@Example.com',
             'email_confirmation' => 'Maria@Example.com',
             'phone' => '(11) 98888-7777',
-            'order_bump' => '1',
+            'order_bumps' => [$this->orderBump->id],
             // Tampering attempts are ignored: only buyer data is read.
             'price' => '1',
             'tipoCurso' => '1',
@@ -166,6 +168,32 @@ class CheckoutTest extends TestCase
         ]);
 
         Http::assertSent(fn (Request $request) => $request['notification_url'] === 'https://cursos.example.com/webhooks/mercadopago?source_news=webhooks');
+    }
+
+    public function test_several_order_bumps_can_be_bought_together(): void
+    {
+        Http::fake(['api.mercadopago.com/*' => Http::response(['id' => 'p', 'init_point' => 'https://mp.test/pay'], 201)]);
+        $apostila = Product::factory()->create(['name' => 'Apostila Extra', 'price' => 50]);
+        $second = $this->product->orderBumps()->create(['bump_product_id' => $apostila->id, 'price' => 9.90, 'sort_order' => 1]);
+        $notShown = OrderBump::factory()->create(['price' => 1]);
+
+        $this->get(route('checkout.show', $this->product))
+            ->assertSeeInOrder(['Pac Esculturas', 'Apostila Extra'])
+            ->assertSee('name="order_bumps[]"', false);
+
+        $this->post(route('checkout.store', $this->product), [
+            'name' => 'Maria',
+            'email' => 'maria@example.com',
+            'email_confirmation' => 'maria@example.com',
+            'phone' => '11988887777',
+            // A bump from another product is ignored, whatever its price.
+            'order_bumps' => [$this->orderBump->id, $second->id, $notShown->id],
+        ])->assertRedirect('https://mp.test/pay');
+
+        $order = Order::query()->with('items')->firstOrFail();
+        $this->assertSame('38.90', $order->amount);
+        $this->assertSame(['Treinamento Essencial', 'Pac Esculturas', 'Apostila Extra'], $order->items->pluck('description')->all());
+        $this->assertSame([false, true, true], $order->items->pluck('is_order_bump')->all());
     }
 
     public function test_checkout_without_bump_charges_only_main_product(): void

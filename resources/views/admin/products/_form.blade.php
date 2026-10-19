@@ -1,5 +1,7 @@
 {{-- Shared product fields. Expects $product and $courses. --}}
-@php($selectedCourses = collect(old('course_ids', $product->exists ? $product->courses->pluck('id')->all() : []))->map(fn ($id) => (int) $id))
+@php
+    $selectedCourses = collect(old('course_ids', $product->exists ? $product->courses->pluck('id')->all() : []))->map(fn ($id) => (int) $id);
+@endphp
 
 <div class="row">
     <div class="col-lg-8">
@@ -74,47 +76,44 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h4 class="card-title">Order bump</h4>
-                <p class="card-subtitle">Oferta extra com caixinha de marcar no checkout deste produto.</p>
+        @php
+            $bumpRows = old('bumps', $product->exists
+                ? $product->orderBumps->map(fn ($bump) => [
+                    'id' => $bump->id,
+                    'bump_product_id' => $bump->bump_product_id,
+                    'price' => number_format((float) $bump->price, 2, ',', ''),
+                    'headline' => $bump->headline,
+                ])->all()
+                : []);
+        @endphp
+
+        <div class="card" id="order-bumps">
+            <div class="card-header d-flex align-items-center">
+                <div class="flex">
+                    <h4 class="card-title">Order bumps</h4>
+                    <p class="card-subtitle">Ofertas extras com caixinha de marcar no checkout deste produto. O cliente pode marcar quantas quiser.</p>
+                </div>
+                <button type="button" class="btn btn-success ml-3 js-add-bump">
+                    <i class="material-icons btn__icon--left">add</i> Adicionar order bump
+                </button>
             </div>
             <div class="card-body">
-                <div class="form-row">
-                    <div class="form-group col-md-8">
-                        <label class="form-label" for="order_bump_product_id">Produto oferecido</label>
-                        <select id="order_bump_product_id" name="order_bump_product_id" class="form-control custom-select @error('order_bump_product_id') is-invalid @enderror">
-                            <option value="">Sem order bump</option>
-                            @foreach ($bumpCandidates as $candidate)
-                                <option value="{{ $candidate->id }}" @selected((int) old('order_bump_product_id', $product->order_bump_product_id) === $candidate->id)>{{ $candidate->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('order_bump_product_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label class="form-label" for="order_bump_price">Preço no bump (R$)</label>
-                        <input type="text" id="order_bump_price" name="order_bump_price" inputmode="decimal"
-                               value="{{ old('order_bump_price', $product->order_bump_price !== null ? number_format($product->order_bump_price, 2, ',', '') : '') }}"
-                               class="form-control @error('order_bump_price') is-invalid @enderror" placeholder="12,00">
-                        @error('order_bump_price')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                <div class="js-bump-rows">
+                    @foreach ($bumpRows as $index => $row)
+                        @include('admin.products._bump-row', ['index' => $index, 'row' => $row])
+                    @endforeach
                 </div>
-                <div class="form-group mb-0">
-                    <label class="form-label" for="order_bump_headline">Chamada ao lado da caixinha</label>
-                    <input type="text" id="order_bump_headline" name="order_bump_headline" maxlength="500"
-                           value="{{ old('order_bump_headline', $product->order_bump_headline) }}"
-                           class="form-control @error('order_bump_headline') is-invalid @enderror"
-                           placeholder="Quero aproveitar essa oportunidade única e levar mais 21 vídeos de esculturas!">
-                    <small class="form-text text-muted">Coloque entre asteriscos o trecho que deve ficar com fundo amarelo, ex.: *OPORTUNIDADE ÚNICA*. O "De R$ X por R$ Y" aparece automaticamente. O produto oferecido precisa estar ativo.</small>
-                    @error('order_bump_headline')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
+                <p class="text-muted mb-0 js-bump-empty" @if (count($bumpRows) > 0) hidden @endif>Nenhum order bump. Clique em "Adicionar order bump".</p>
+                <small class="form-text text-muted">
+                    Na chamada, coloque entre asteriscos o trecho que fica com fundo amarelo, ex.: *OPORTUNIDADE ÚNICA*.
+                    O "De R$ X por R$ Y" aparece sozinho. O produto oferecido precisa estar ativo.
+                    Nas ofertas (links de campanha) dá para mudar o preço de cada bump ou tirá-lo.
+                </small>
             </div>
+
+            <template class="js-bump-template">
+                @include('admin.products._bump-row', ['index' => '__INDEX__', 'row' => []])
+            </template>
         </div>
     </div>
 
@@ -203,3 +202,45 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+    <script>
+        (function () {
+            var card = document.getElementById('order-bumps');
+            var rows = card.querySelector('.js-bump-rows');
+            var empty = card.querySelector('.js-bump-empty');
+            var template = card.querySelector('.js-bump-template');
+            var refresh = function () {
+                empty.hidden = rows.children.length > 0;
+            };
+
+            card.querySelector('.js-add-bump').addEventListener('click', function () {
+                var index = 'n' + Date.now();
+                rows.insertAdjacentHTML('beforeend', template.innerHTML.replace(/__INDEX__/g, index));
+                refresh();
+            });
+
+            // Up/down/remove buttons; the order of the rows is the order on the checkout.
+            rows.addEventListener('click', function (event) {
+                var button = event.target.closest('[data-bump-action]');
+
+                if (!button) {
+                    return;
+                }
+
+                var row = button.closest('.js-bump-row');
+                var action = button.dataset.bumpAction;
+
+                if (action === 'remove' && confirm('Tirar este order bump do produto?')) {
+                    row.remove();
+                } else if (action === 'up' && row.previousElementSibling) {
+                    rows.insertBefore(row, row.previousElementSibling);
+                } else if (action === 'down' && row.nextElementSibling) {
+                    rows.insertBefore(row.nextElementSibling, row);
+                }
+
+                refresh();
+            });
+        })();
+    </script>
+@endpush

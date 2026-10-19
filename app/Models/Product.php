@@ -4,17 +4,15 @@ namespace App\Models;
 
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\HtmlString;
 
 #[Fillable([
     'name', 'slug', 'description', 'price', 'access_days', 'hotmart_product_id', 'is_active',
-    'order_bump_product_id', 'order_bump_price', 'order_bump_headline',
     'checkout_banner', 'checkout_timer_minutes', 'facebook_pixel_ids',
 ])]
 class Product extends Model
@@ -31,7 +29,6 @@ class Product extends Model
             'price' => 'decimal:2',
             'access_days' => 'integer',
             'is_active' => 'boolean',
-            'order_bump_price' => 'decimal:2',
             'checkout_timer_minutes' => 'integer',
         ];
     }
@@ -53,13 +50,13 @@ class Product extends Model
     }
 
     /**
-     * Extra product offered with a checkbox on this product's checkout.
+     * Extra products offered with a checkbox on this product's checkout, in display order.
      *
-     * @return BelongsTo<Product, $this>
+     * @return HasMany<OrderBump, $this>
      */
-    public function orderBumpProduct(): BelongsTo
+    public function orderBumps(): HasMany
     {
-        return $this->belongsTo(Product::class, 'order_bump_product_id');
+        return $this->hasMany(OrderBump::class)->orderBy('sort_order')->orderBy('id');
     }
 
     /**
@@ -80,24 +77,19 @@ class Product extends Model
         return (string) ($offer?->price ?? $this->price);
     }
 
-    public function offersOrderBump(?ProductOffer $offer = null): bool
-    {
-        if ($offer?->without_order_bump) {
-            return false;
-        }
-
-        return $this->order_bump_product_id !== null
-            && $this->order_bump_price !== null
-            && $this->orderBumpProduct?->is_active === true;
-    }
-
     /**
-     * Price charged for the bump: the special checkout price (or the offer's),
-     * never the bump's regular price.
+     * Order bumps shown on the checkout, with the offer's changes applied.
+     *
+     * @return Collection<int, OrderBump>
      */
-    public function orderBumpPrice(?ProductOffer $offer = null): string
+    public function checkoutBumps(?ProductOffer $offer = null): Collection
     {
-        return (string) ($offer?->order_bump_price ?? $this->order_bump_price);
+        $offer?->loadMissing('bumpOverrides');
+
+        return $this->orderBumps
+            ->loadMissing('bumpProduct')
+            ->filter(fn (OrderBump $bump) => $bump->isAvailableFor($offer))
+            ->values();
     }
 
     /**
@@ -115,15 +107,5 @@ class Product extends Model
         return $this->checkout_banner
             ? Storage::disk('public')->url($this->checkout_banner)
             : asset(config('checkout.default_banner'));
-    }
-
-    /**
-     * Order bump call-to-action; text between asterisks is highlighted (*OPORTUNIDADE ÚNICA*).
-     */
-    public function orderBumpHeadlineHtml(): HtmlString
-    {
-        $text = $this->order_bump_headline ?: 'Sim! Quero aproveitar essa *OPORTUNIDADE ÚNICA* e incluir esta oferta no meu pedido.';
-
-        return new HtmlString(preg_replace('/\*(.+?)\*/u', '<span class="highlight">$1</span>', e($text)));
     }
 }

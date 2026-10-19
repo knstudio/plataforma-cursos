@@ -225,6 +225,11 @@ body.checkout-page {
     background-color: yellow;
 }
 
+.order-bump-box__price,
+.order-bump-box__headline del {
+    white-space: nowrap;
+}
+
 .order-bump-box__price {
     color: green;
     font-size: 1.4em;

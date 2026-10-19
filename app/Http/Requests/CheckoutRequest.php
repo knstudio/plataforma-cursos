@@ -21,7 +21,9 @@ class CheckoutRequest extends FormRequest
             'name' => ['required', 'string', 'min:3', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'confirmed'],
             'phone' => ['required', 'string', 'regex:/^\d{10,11}$/'],
-            'order_bump' => ['boolean'],
+            // IDs of the ticked order bumps; checked against the product's bumps in the controller.
+            'order_bumps' => ['array'],
+            'order_bumps.*' => ['integer'],
         ];
     }
 
@@ -52,7 +54,7 @@ class CheckoutRequest extends FormRequest
             'email' => mb_strtolower(trim((string) $this->input('email'))),
             'email_confirmation' => mb_strtolower(trim((string) $this->input('email_confirmation'))),
             'phone' => preg_replace('/\D/', '', (string) $this->input('phone')),
-            'order_bump' => $this->boolean('order_bump'),
+            'order_bumps' => array_values(array_filter((array) $this->input('order_bumps', []), 'is_numeric')),
         ]);
     }
 }

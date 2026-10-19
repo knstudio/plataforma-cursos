@@ -5,9 +5,8 @@
 @php
     $price = (float) $product->priceFor($offer);
     $regularPrice = (float) $product->price;
-    $hasBump = $product->offersOrderBump($offer);
-    $bumpPrice = $hasBump ? (float) $product->orderBumpPrice($offer) : 0;
-    $bumpRegularPrice = $hasBump ? (float) $product->orderBumpProduct->price : 0;
+    $chosenBumps = collect(old('order_bumps', []))->map(fn ($id) => (int) $id);
+    $initialTotal = $price + $bumps->whereIn('id', $chosenBumps)->sum(fn ($bump) => (float) $bump->priceFor($offer));
     $timerMinutes = (int) $product->checkout_timer_minutes;
     $brl = fn (float $value) => 'R$ '.number_format($value, 2, ',', '.');
 @endphp
@@ -94,20 +93,24 @@
                 @endif
             </div>
 
-            @if ($hasBump)
+            @foreach ($bumps as $bump)
+                @php
+                    $bumpPrice = (float) $bump->priceFor($offer);
+                    $bumpRegularPrice = (float) $bump->bumpProduct->price;
+                @endphp
                 <div class="item order-bump-box">
                     <p class="order-bump-box__title">
-                        <strong>+ {{ $product->orderBumpProduct->name }} <span>- {{ $brl($bumpPrice) }} 😱</span></strong>
+                        <strong>+ {{ $bump->bumpProduct->name }} <span>- {{ $brl($bumpPrice) }} 😱</span></strong>
                     </p>
-                    <label class="order-bump-box__offer" for="order_bump">
+                    <label class="order-bump-box__offer" for="order_bump_{{ $bump->id }}">
                         <span class="order-bump-box__pointer">
                             <img src="{{ asset('assets/images/checkout/seta.png') }}" alt="">
-                            <input class="order-bump-box__check" type="checkbox" id="order_bump" name="order_bump" value="1"
-                                   data-price="{{ $bumpPrice }}" @checked(old('order_bump'))>
+                            <input class="order-bump-box__check js-order-bump" type="checkbox" id="order_bump_{{ $bump->id }}" name="order_bumps[]"
+                                   value="{{ $bump->id }}" data-price="{{ $bumpPrice }}" @checked($chosenBumps->contains($bump->id))>
                         </span>
                         <span class="order-bump-box__text">
                             <strong class="order-bump-box__headline">
-                                {{ $product->orderBumpHeadlineHtml() }}
+                                {{ $bump->headlineHtml() }}
                                 @if ($bumpRegularPrice > $bumpPrice)
                                     <span class="text-dark">De <del>{{ $brl($bumpRegularPrice) }}</del> por</span>
                                 @endif
@@ -117,11 +120,11 @@
                         </span>
                     </label>
                 </div>
-            @endif
+            @endforeach
 
             <div class="total">
                 Total
-                <span class="price" id="checkout-total" data-base="{{ $price }}">{{ $brl($price + (old('order_bump') && $hasBump ? $bumpPrice : 0)) }}</span>
+                <span class="price" id="checkout-total" data-base="{{ $price }}">{{ $brl($initialTotal) }}</span>
             </div>
         </div>
 
@@ -136,7 +139,7 @@
 @push('scripts')
     <script>
         (function () {
-            var bump = document.getElementById('order_bump');
+            var bumps = document.querySelectorAll('.js-order-bump');
             var total = document.getElementById('checkout-total');
             var phone = document.getElementById('phone');
             var timer = document.getElementById('checkout-timer');
@@ -173,12 +176,21 @@
                 }
             });
 
-            if (bump) {
-                bump.addEventListener('change', function () {
-                    var base = parseFloat(total.dataset.base);
-                    total.textContent = formatMoney(base + (bump.checked ? parseFloat(bump.dataset.price) : 0));
+            var updateTotal = function () {
+                var sum = parseFloat(total.dataset.base);
+
+                bumps.forEach(function (bump) {
+                    if (bump.checked) {
+                        sum += parseFloat(bump.dataset.price);
+                    }
                 });
-            }
+
+                total.textContent = formatMoney(sum);
+            };
+
+            bumps.forEach(function (bump) {
+                bump.addEventListener('change', updateTotal);
+            });
 
             phone.addEventListener('input', function () {
                 var digits = phone.value.replace(/\D/g, '').slice(0, 11);

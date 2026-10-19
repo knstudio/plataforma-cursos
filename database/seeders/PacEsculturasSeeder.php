@@ -67,11 +67,12 @@ class PacEsculturasSeeder extends Seeder
 
         Product::query()
             ->where('slug', 'treinamento-essencial')
-            ->whereNull('order_bump_product_id')
-            ->update([
-                'order_bump_product_id' => $product->id,
-                'order_bump_price' => 12.00,
-                'order_bump_headline' => 'Quero aproveitar essa *OPORTUNIDADE ÚNICA* com desconto de 83% e levar mais 21 vídeos de Esculturas com Balões.',
+            ->first()
+            ?->orderBumps()
+            ->firstOrCreate(['bump_product_id' => $product->id], [
+                'price' => 12.00,
+                'headline' => 'Quero aproveitar essa *OPORTUNIDADE ÚNICA* com desconto de 83% e levar mais 21 vídeos de Esculturas com Balões.',
+                'sort_order' => 0,
             ]);
     }
 

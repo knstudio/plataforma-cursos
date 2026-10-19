@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Course;
 use App\Models\Order;
+use App\Models\OrderBump;
 use App\Models\Product;
 use App\Models\ProductOffer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +18,8 @@ class OfferCheckoutTest extends TestCase
 
     private Product $product;
 
+    private OrderBump $orderBump;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,10 +31,9 @@ class OfferCheckoutTest extends TestCase
         $this->product = Product::factory()->create([
             'slug' => 'treinamento-essencial',
             'price' => 17,
-            'order_bump_product_id' => $bump->id,
-            'order_bump_price' => 12,
         ]);
         $this->product->courses()->attach(Course::factory()->create());
+        $this->orderBump = $this->product->orderBumps()->create(['bump_product_id' => $bump->id, 'price' => 12]);
     }
 
     public function test_offer_link_shows_the_special_price(): void
@@ -47,7 +49,8 @@ class OfferCheckoutTest extends TestCase
 
     public function test_offer_price_and_bump_price_are_charged(): void
     {
-        $offer = ProductOffer::factory()->for($this->product)->create(['price' => 9.90, 'order_bump_price' => 7]);
+        $offer = ProductOffer::factory()->for($this->product)->create(['price' => 9.90]);
+        $offer->bumpOverrides()->create(['order_bump_id' => $this->orderBump->id, 'price' => 7]);
 
         $this->post(route('checkout.offer.store', [$this->product, $offer]), $this->buyer(withBump: true))
             ->assertRedirect('https://mp.test/pay');
@@ -82,6 +85,35 @@ class OfferCheckoutTest extends TestCase
         $this->assertCount(1, $order->items);
     }
 
+    public function test_offer_can_remove_one_bump_and_reprice_another(): void
+    {
+        $apostila = Product::factory()->create(['name' => 'Apostila Extra']);
+        $second = $this->product->orderBumps()->create(['bump_product_id' => $apostila->id, 'price' => 20, 'sort_order' => 1]);
+        $offer = ProductOffer::factory()->for($this->product)->create(['price' => 9.90]);
+        $offer->bumpOverrides()->create(['order_bump_id' => $this->orderBump->id, 'is_removed' => true]);
+        $offer->bumpOverrides()->create(['order_bump_id' => $second->id, 'price' => 5]);
+
+        $this->get(route('checkout.offer.show', [$this->product, $offer]))
+            ->assertDontSee('Pac Esculturas')
+            ->assertSee('Apostila Extra')
+            ->assertSee('R$ 5,00');
+
+        // The removed bump can't be bought through this link even if its id is posted.
+        $this->post(route('checkout.offer.store', [$this->product, $offer]), [
+            ...$this->buyer(),
+            'order_bumps' => [$this->orderBump->id, $second->id],
+        ]);
+
+        $order = Order::query()->with('items')->firstOrFail();
+        $this->assertSame('14.90', $order->amount);
+        $this->assertSame(['Apostila Extra'], $order->items->where('is_order_bump', true)->pluck('description')->values()->all());
+
+        // The regular checkout still shows both bumps at their own prices.
+        $this->get(route('checkout.show', $this->product))
+            ->assertSee('Pac Esculturas')
+            ->assertSee('R$ 20,00');
+    }
+
     public function test_expired_offer_falls_back_to_the_regular_checkout(): void
     {
         $offer = ProductOffer::factory()->for($this->product)->expired()->create();
@@ -114,7 +146,7 @@ class OfferCheckoutTest extends TestCase
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
     private function buyer(bool $withBump = false): array
     {
@@ -123,7 +155,7 @@ class OfferCheckoutTest extends TestCase
             'email' => 'maria@example.com',
             'email_confirmation' => 'maria@example.com',
             'phone' => '11988887777',
-            'order_bump' => $withBump ? '1' : null,
+            'order_bumps' => $withBump ? [$this->orderBump->id] : null,
         ]);
     }
 }

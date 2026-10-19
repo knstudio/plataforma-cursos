@@ -29,9 +29,14 @@
                             <td>
                                 <strong>{{ $offer->name }}</strong>
                                 @if ($offer->without_order_bump)
-                                    <br><small class="text-muted">sem order bump</small>
-                                @elseif ($offer->order_bump_price !== null)
-                                    <br><small class="text-muted">bump R$ {{ number_format($offer->order_bump_price, 2, ',', '.') }}</small>
+                                    <br><small class="text-muted">sem order bumps</small>
+                                @else
+                                    @foreach ($offer->bumpOverrides as $override)
+                                        <br><small class="text-muted">
+                                            {{ $override->orderBump?->bumpProduct?->name }}:
+                                            {{ $override->is_removed ? 'fora desta oferta' : 'R$ '.number_format((float) $override->price, 2, ',', '.') }}
+                                        </small>
+                                    @endforeach
                                 @endif
                             </td>
                             <td style="min-width: 260px">

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
+use App\Models\OrderBump;
 use App\Models\Product;
 use App\Models\ProductOffer;
 use App\Models\User;
@@ -27,12 +28,22 @@ class AdminOfferTest extends TestCase
 
     public function test_admin_can_create_offer_with_brazilian_values(): void
     {
-        $this->actingAs($this->admin)->get(route('admin.offers.create', $this->product))->assertOk();
+        $pac = OrderBump::factory()->for($this->product)->create(['price' => 12]);
+        $apostila = OrderBump::factory()->for($this->product)->create(['price' => 20]);
+        $untouched = OrderBump::factory()->for($this->product)->create(['price' => 30]);
+
+        $this->actingAs($this->admin)->get(route('admin.offers.create', $this->product))
+            ->assertOk()
+            ->assertSee('Order bumps nesta oferta');
 
         $this->actingAs($this->admin)->post(route('admin.offers.store', $this->product), [
             'name' => 'Campanha WhatsApp Outubro',
             'price' => '9,90',
-            'order_bump_price' => '7,00',
+            'bumps' => [
+                $pac->id => ['price' => '7,00'],
+                $apostila->id => ['price' => '', 'removed' => '1'],
+                $untouched->id => ['price' => ''],
+            ],
             'expires_at' => now()->addWeek()->toDateString(),
             'is_active' => '1',
         ])->assertSessionHasNoErrors();
@@ -40,9 +51,32 @@ class AdminOfferTest extends TestCase
         $offer = $this->product->offers()->firstOrFail();
         $this->assertSame('campanha-whatsapp-outubro', $offer->code);
         $this->assertSame('9.90', $offer->price);
-        $this->assertSame('7.00', $offer->order_bump_price);
+        $this->assertSame('7.00', $pac->priceFor($offer));
+        $this->assertFalse($apostila->isAvailableFor($offer));
+        $this->assertSame('30.00', $untouched->priceFor($offer));
+        $this->assertCount(2, $offer->bumpOverrides);
         $this->assertSame('23:59:59', $offer->expires_at->format('H:i:s'));
         $this->assertTrue($offer->isAvailable());
+    }
+
+    public function test_editing_an_offer_can_restore_the_default_bump_price(): void
+    {
+        $bump = OrderBump::factory()->for($this->product)->create(['price' => 12]);
+        $offer = ProductOffer::factory()->for($this->product)->create();
+        $offer->bumpOverrides()->create(['order_bump_id' => $bump->id, 'price' => 5]);
+
+        $this->actingAs($this->admin)->get(route('admin.offers.edit', $offer))
+            ->assertOk()
+            ->assertSee('value="5,00"', false);
+
+        $this->actingAs($this->admin)->put(route('admin.offers.update', $offer), [
+            'name' => $offer->name,
+            'code' => $offer->code,
+            'price' => '9,90',
+            'bumps' => [$bump->id => ['price' => '']],
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame('12.00', $bump->priceFor($offer->fresh()));
     }
 
     public function test_code_must_be_unique_within_the_product(): void

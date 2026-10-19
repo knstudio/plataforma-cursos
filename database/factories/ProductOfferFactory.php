@@ -23,7 +23,6 @@ class ProductOfferFactory extends Factory
             'name' => 'Campanha '.fake()->monthName(),
             'code' => fake()->unique()->slug(2),
             'price' => fake()->randomFloat(2, 5, 50),
-            'order_bump_price' => null,
             'without_order_bump' => false,
             'expires_at' => null,
             'is_active' => true,

@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * A special price for a product, reachable through its own checkout link
  * (e.g. /checkout/treinamento-essencial/whats-outubro) for campaigns.
  */
-#[Fillable(['product_id', 'name', 'code', 'price', 'order_bump_price', 'without_order_bump', 'expires_at', 'is_active'])]
+#[Fillable(['product_id', 'name', 'code', 'price', 'without_order_bump', 'expires_at', 'is_active'])]
 class ProductOffer extends Model
 {
     /** @use HasFactory<ProductOfferFactory> */
@@ -26,7 +26,6 @@ class ProductOffer extends Model
     {
         return [
             'price' => 'decimal:2',
-            'order_bump_price' => 'decimal:2',
             'without_order_bump' => 'boolean',
             'expires_at' => 'datetime',
             'is_active' => 'boolean',
@@ -47,6 +46,21 @@ class ProductOffer extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Changes this offer makes to the product's order bumps (price or removal).
+     *
+     * @return HasMany<ProductOfferBump, $this>
+     */
+    public function bumpOverrides(): HasMany
+    {
+        return $this->hasMany(ProductOfferBump::class);
+    }
+
+    public function bumpOverride(OrderBump $bump): ?ProductOfferBump
+    {
+        return $this->bumpOverrides->firstWhere('order_bump_id', $bump->id);
     }
 
     public function isAvailable(): bool

@@ -43,7 +43,10 @@ class ProductOfferRequest extends FormRequest
                 Rule::unique('product_offers', 'code')->where('product_id', $this->product()->id)->ignore($offer?->id),
             ],
             'price' => ['required', 'numeric', 'min:0', 'max:99999999'],
-            'order_bump_price' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            // Keyed by order bump id: a different price and/or removal for this offer.
+            'bumps' => ['array'],
+            'bumps.*.price' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'bumps.*.removed' => ['boolean'],
             'without_order_bump' => ['boolean'],
             'expires_at' => ['nullable', 'date'],
             'is_active' => ['boolean'],
@@ -59,7 +62,7 @@ class ProductOfferRequest extends FormRequest
             'name' => 'nome da oferta',
             'code' => 'código do link',
             'price' => 'preço',
-            'order_bump_price' => 'preço do order bump',
+            'bumps.*.price' => 'preço do order bump',
             'expires_at' => 'validade',
         ];
     }
@@ -69,7 +72,13 @@ class ProductOfferRequest extends FormRequest
         $this->merge([
             'code' => Str::slug($this->input('code') ?: $this->input('name', '')),
             'price' => $this->decimal($this->input('price')),
-            'order_bump_price' => $this->decimal($this->input('order_bump_price')),
+            'bumps' => collect((array) $this->input('bumps', []))
+                ->filter(fn ($row) => is_array($row))
+                ->map(fn (array $row) => [
+                    'price' => $this->decimal($row['price'] ?? null),
+                    'removed' => filter_var($row['removed'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                ])
+                ->all(),
             'without_order_bump' => $this->boolean('without_order_bump'),
             'is_active' => $this->boolean('is_active'),
             'expires_at' => filled($this->input('expires_at')) ? $this->input('expires_at') : null,

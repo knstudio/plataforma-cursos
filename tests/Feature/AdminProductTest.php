@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Course;
 use App\Models\Order;
+use App\Models\OrderBump;
 use App\Models\Product;
+use App\Models\ProductOffer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -73,11 +75,16 @@ class AdminProductTest extends TestCase
         $this->assertFalse($product->is_active);
     }
 
-    public function test_admin_can_configure_order_bump(): void
+    public function test_admin_can_configure_several_order_bumps(): void
     {
         $product = Product::factory()->create();
-        $bump = Product::factory()->create();
+        $pac = Product::factory()->create(['name' => 'Pac Esculturas']);
+        $apostila = Product::factory()->create(['name' => 'Apostila']);
         $course = Course::factory()->create();
+
+        $this->actingAs($this->admin)->get(route('admin.products.edit', $product))
+            ->assertOk()
+            ->assertSee('Adicionar order bump');
 
         $this->actingAs($this->admin)->put(route('admin.products.update', $product), [
             'name' => $product->name,
@@ -85,15 +92,46 @@ class AdminProductTest extends TestCase
             'price' => '17,00',
             'is_active' => '1',
             'course_ids' => [$course->id],
-            'order_bump_product_id' => $bump->id,
-            'order_bump_price' => '12,00',
-            'order_bump_headline' => 'Leve mais 21 vídeos!',
+            'bumps' => [
+                ['id' => '', 'bump_product_id' => $apostila->id, 'price' => '9,90', 'headline' => ''],
+                ['id' => '', 'bump_product_id' => $pac->id, 'price' => '12,00', 'headline' => 'Leve mais 21 vídeos!'],
+                ['id' => '', 'bump_product_id' => '', 'price' => '', 'headline' => ''], // blank row from "add"
+            ],
         ])->assertSessionHasNoErrors();
 
-        $product->refresh();
-        $this->assertSame($bump->id, $product->order_bump_product_id);
-        $this->assertSame('12.00', $product->order_bump_price);
-        $this->assertTrue($product->offersOrderBump());
+        $bumps = $product->orderBumps()->get();
+        $this->assertSame([$apostila->id, $pac->id], $bumps->pluck('bump_product_id')->all());
+        $this->assertSame(['9.90', '12.00'], $bumps->pluck('price')->all());
+        $this->assertSame('Leve mais 21 vídeos!', $bumps[1]->headline);
+        $this->assertCount(2, $product->checkoutBumps());
+    }
+
+    public function test_saving_bumps_keeps_offer_prices_and_removes_deleted_bumps(): void
+    {
+        $product = Product::factory()->create();
+        $course = Course::factory()->create();
+        $product->courses()->attach($course);
+        $kept = OrderBump::factory()->for($product)->create(['price' => 12]);
+        $removed = OrderBump::factory()->for($product)->create(['price' => 20]);
+        $offer = ProductOffer::factory()->for($product)->create();
+        $offer->bumpOverrides()->create(['order_bump_id' => $kept->id, 'price' => 5]);
+
+        $this->actingAs($this->admin)->put(route('admin.products.update', $product), [
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'price' => '17',
+            'course_ids' => [$course->id],
+            'bumps' => [
+                ['id' => $kept->id, 'bump_product_id' => $kept->bump_product_id, 'price' => '15,00'],
+                // Same product as the removed bump, added again in the same save.
+                ['id' => '', 'bump_product_id' => $removed->bump_product_id, 'price' => '25,00'],
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $this->assertModelMissing($removed);
+        $this->assertSame('15.00', $kept->fresh()->price);
+        $this->assertSame('5.00', $kept->fresh()->priceFor($offer->fresh()));
+        $this->assertCount(2, $product->orderBumps()->get());
     }
 
     public function test_admin_can_upload_and_remove_checkout_banner(): void
@@ -134,8 +172,8 @@ class AdminProductTest extends TestCase
             'slug' => $product->slug,
             'price' => '17',
             'course_ids' => [Course::factory()->create()->id],
-            'order_bump_product_id' => $product->id,
-        ])->assertSessionHasErrors(['order_bump_product_id', 'order_bump_price']);
+            'bumps' => [['bump_product_id' => $product->id, 'price' => '']],
+        ])->assertSessionHasErrors(['bumps.0.bump_product_id', 'bumps.0.price']);
     }
 
     public function test_product_with_orders_cannot_be_deleted(): void

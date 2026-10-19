@@ -39,9 +39,12 @@ class ProductRequest extends FormRequest
             'is_active' => ['boolean'],
             'course_ids' => ['required', 'array', 'min:1'],
             'course_ids.*' => ['integer', 'exists:courses,id'],
-            'order_bump_product_id' => ['nullable', 'integer', Rule::exists('products', 'id'), Rule::notIn(array_filter([$product?->id]))],
-            'order_bump_price' => ['nullable', 'required_with:order_bump_product_id', 'numeric', 'min:0', 'max:99999999'],
-            'order_bump_headline' => ['nullable', 'string', 'max:500'],
+            // Order bumps in display order; "id" is set for bumps that already exist.
+            'bumps' => ['array'],
+            'bumps.*.id' => ['nullable', 'integer', Rule::exists('order_bumps', 'id')->where('product_id', $product?->id ?? 0)],
+            'bumps.*.bump_product_id' => ['required', 'integer', 'distinct', Rule::exists('products', 'id'), Rule::notIn(array_filter([$product?->id]))],
+            'bumps.*.price' => ['required', 'numeric', 'min:0', 'max:99999999'],
+            'bumps.*.headline' => ['nullable', 'string', 'max:500'],
             'checkout_banner_upload' => ['nullable', 'image', 'max:2048'],
             'remove_checkout_banner' => ['boolean'],
             'checkout_timer_minutes' => ['nullable', 'integer', 'min:0', 'max:1440'],
@@ -61,9 +64,9 @@ class ProductRequest extends FormRequest
             'access_days' => 'dias de acesso',
             'hotmart_product_id' => 'ID do produto na Hotmart',
             'course_ids' => 'cursos',
-            'order_bump_product_id' => 'produto do order bump',
-            'order_bump_price' => 'preço do order bump',
-            'order_bump_headline' => 'chamada do order bump',
+            'bumps.*.bump_product_id' => 'produto do order bump',
+            'bumps.*.price' => 'preço do order bump',
+            'bumps.*.headline' => 'chamada do order bump',
             'checkout_banner_upload' => 'banner do checkout',
             'checkout_timer_minutes' => 'minutos do contador',
             'facebook_pixel_ids' => 'pixels do Facebook',
@@ -75,8 +78,7 @@ class ProductRequest extends FormRequest
         $this->merge([
             'slug' => Str::slug($this->input('slug') ?: $this->input('name', '')),
             'price' => $this->decimal($this->input('price')),
-            'order_bump_product_id' => filled($this->input('order_bump_product_id')) ? $this->input('order_bump_product_id') : null,
-            'order_bump_price' => $this->decimal($this->input('order_bump_price')),
+            'bumps' => $this->bumpRows(),
             'is_active' => $this->boolean('is_active'),
             'remove_checkout_banner' => $this->boolean('remove_checkout_banner'),
             'facebook_pixel_ids' => $this->normalizePixelIds($this->input('facebook_pixel_ids')),
@@ -84,5 +86,24 @@ class ProductRequest extends FormRequest
             'hotmart_product_id' => filled($this->input('hotmart_product_id')) ? trim($this->input('hotmart_product_id')) : null,
             'access_days' => filled($this->input('access_days')) ? $this->input('access_days') : null,
         ]);
+    }
+
+    /**
+     * Rows left completely blank (an "add" click with nothing filled in) are ignored.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function bumpRows(): array
+    {
+        return collect((array) $this->input('bumps', []))
+            ->filter(fn ($row) => is_array($row) && (filled($row['bump_product_id'] ?? null) || filled($row['price'] ?? null)))
+            ->map(fn (array $row) => [
+                'id' => filled($row['id'] ?? null) ? $row['id'] : null,
+                'bump_product_id' => filled($row['bump_product_id'] ?? null) ? $row['bump_product_id'] : null,
+                'price' => $this->decimal($row['price'] ?? null),
+                'headline' => filled($row['headline'] ?? null) ? trim($row['headline']) : null,
+            ])
+            ->values()
+            ->all();
     }
 }

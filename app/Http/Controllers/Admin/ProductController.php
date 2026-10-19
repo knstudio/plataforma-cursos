@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ProductRequest;
 use App\Models\Course;
+use App\Models\OrderBump;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +19,7 @@ class ProductController extends Controller
     public function index(): View
     {
         $products = Product::query()
-            ->with(['courses:id,title', 'orderBumpProduct:id,name'])
+            ->with(['courses:id,title', 'orderBumps.bumpProduct:id,name'])
             ->withCount(['orders as approved_orders_count' => fn (Builder $orders) => $orders->where('status', OrderStatus::Approved)])
             ->orderBy('name')
             ->paginate(20);
@@ -42,6 +43,7 @@ class ProductController extends Controller
         DB::transaction(function () use ($request): void {
             $product = Product::query()->create($this->productAttributes($request));
             $product->courses()->sync($request->validated('course_ids'));
+            $this->syncOrderBumps($product, $request->validated('bumps', []));
         });
 
         return redirect()->route('admin.products.index')->with('status', 'Produto criado.');
@@ -53,7 +55,9 @@ class ProductController extends Controller
 
         $product->load([
             'courses:id',
+            'orderBumps',
             'offers' => fn ($offers) => $offers
+                ->with('bumpOverrides.orderBump.bumpProduct:id,name')
                 ->withCount(['orders as approved_orders_count' => $approved])
                 ->withSum(['orders as approved_revenue' => $approved], 'amount')
                 ->latest(),
@@ -71,6 +75,7 @@ class ProductController extends Controller
         DB::transaction(function () use ($request, $product): void {
             $product->update($this->productAttributes($request, $product));
             $product->courses()->sync($request->validated('course_ids'));
+            $this->syncOrderBumps($product, $request->validated('bumps', []));
         });
 
         return redirect()->route('admin.products.edit', $product)->with('status', 'Produto atualizado.');
@@ -101,7 +106,7 @@ class ProductController extends Controller
      */
     private function productAttributes(ProductRequest $request, ?Product $product = null): array
     {
-        $attributes = $request->safe()->except(['course_ids', 'checkout_banner_upload', 'remove_checkout_banner']);
+        $attributes = $request->safe()->except(['course_ids', 'bumps', 'checkout_banner_upload', 'remove_checkout_banner']);
 
         if ($request->hasFile('checkout_banner_upload') || $request->validated('remove_checkout_banner')) {
             if ($product?->checkout_banner) {
@@ -114,5 +119,37 @@ class ProductController extends Controller
         }
 
         return $attributes;
+    }
+
+    /**
+     * Removes the bumps taken off the form, updates the ones kept (so offer prices stay
+     * attached) and creates the new ones. Form order becomes display order.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function syncOrderBumps(Product $product, array $rows): void
+    {
+        // Removed first, so a bump removed and added again in the same save doesn't clash.
+        OrderBump::query()
+            ->where('product_id', $product->id)
+            ->whereNotIn('id', collect($rows)->pluck('id')->filter()->all())
+            ->delete();
+
+        foreach (array_values($rows) as $position => $row) {
+            $attributes = [
+                'bump_product_id' => $row['bump_product_id'],
+                'price' => $row['price'],
+                'headline' => $row['headline'],
+                'sort_order' => $position,
+            ];
+
+            $bump = filled($row['id']) ? OrderBump::query()->where('product_id', $product->id)->find($row['id']) : null;
+
+            if ($bump) {
+                $bump->update($attributes);
+            } else {
+                $product->orderBumps()->create($attributes);
+            }
+        }
     }
 }

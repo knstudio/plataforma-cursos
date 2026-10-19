@@ -36,8 +36,8 @@
                         <tr>
                             <td>
                                 <a href="{{ route('admin.products.edit', $product) }}"><strong>{{ $product->name }}</strong></a>
-                                @if ($product->orderBumpProduct)
-                                    <br><small class="text-muted">Order bump: {{ $product->orderBumpProduct->name }}</small>
+                                @if ($product->orderBumps->isNotEmpty())
+                                    <br><small class="text-muted">Order bumps: {{ $product->orderBumps->map(fn ($bump) => $bump->bumpProduct?->name)->filter()->implode(', ') }}</small>
                                 @endif
                             </td>
                             <td style="white-space: normal">{{ $product->courses->pluck('title')->implode(', ') }}</td>

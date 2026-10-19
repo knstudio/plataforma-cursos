@@ -40,11 +40,10 @@ class CheckoutController extends Controller
             return $this->offerUnavailable($product);
         }
 
-        $product->load('orderBumpProduct');
-
         return view('checkout.show', [
             'product' => $product,
             'offer' => $offer,
+            'bumps' => $product->checkoutBumps($offer),
         ]);
     }
 
@@ -61,10 +60,11 @@ class CheckoutController extends Controller
             return $this->offerUnavailable($product);
         }
 
-        $product->load('orderBumpProduct');
-        $withBump = $request->validated('order_bump') && $product->offersOrderBump($offer);
+        // Only bumps this checkout really shows can be bought, at the price it shows.
+        $chosenBumps = $product->checkoutBumps($offer)
+            ->whereIn('id', array_map('intval', $request->validated('order_bumps', [])));
 
-        $order = DB::transaction(function () use ($request, $product, $offer, $buyers, $withBump): Order {
+        $order = DB::transaction(function () use ($request, $product, $offer, $buyers, $chosenBumps): Order {
             $user = $buyers->resolve($request->validated('email'), $request->validated('name'), $request->validated('phone'));
 
             $items = [[
@@ -74,11 +74,11 @@ class CheckoutController extends Controller
                 'is_order_bump' => false,
             ]];
 
-            if ($withBump) {
+            foreach ($chosenBumps as $bump) {
                 $items[] = [
-                    'product_id' => $product->orderBumpProduct->id,
-                    'description' => $product->orderBumpProduct->name,
-                    'unit_price' => $product->orderBumpPrice($offer),
+                    'product_id' => $bump->bumpProduct->id,
+                    'description' => $bump->bumpProduct->name,
+                    'unit_price' => $bump->priceFor($offer),
                     'is_order_bump' => true,
                 ];
             }
