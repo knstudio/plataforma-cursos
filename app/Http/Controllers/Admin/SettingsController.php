@@ -18,6 +18,7 @@ class SettingsController extends Controller
         'mercadopago_access_token' => 'services.mercadopago.access_token',
         'mercadopago_webhook_secret' => 'services.mercadopago.webhook_secret',
         'hotmart_hottok' => 'services.hotmart.hottok',
+        'evolution_api_key' => 'services.evolution.api_key',
     ];
 
     public function edit(): View
@@ -27,6 +28,8 @@ class SettingsController extends Controller
             'supportEmail' => Setting::value('support_email', config('checkout.support_email')),
             'companyName' => Setting::value('company_name', config('checkout.company_name')),
             'companyDocument' => Setting::value('company_document', config('checkout.company_document')),
+            'evolutionUrl' => Setting::value('evolution_url', config('services.evolution.url')),
+            'evolutionWebhookUrl' => route('webhooks.evolution', ['token' => Setting::evolutionWebhookToken()]),
             'secrets' => collect(self::ENV_FALLBACKS)->map(fn (string $config, string $key) => $this->describeSecret($key, $config)),
         ]);
     }

@@ -18,8 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Gateways post server-to-server; they are authenticated by signature/hottok instead.
+        // Funnel forms are posted from the WordPress landing pages.
         $middleware->validateCsrfTokens(except: [
             'webhooks/*',
+            'funil/formulario',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

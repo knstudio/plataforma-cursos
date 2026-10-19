@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\EnrollmentSource;
+use App\Enums\OrderStatus;
 use App\Enums\UserRole;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
@@ -65,6 +66,19 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    /**
+     * Whether an approved order includes the product, as main product or order bump.
+     */
+    public function hasPurchased(int $productId): bool
+    {
+        return $this->orders()
+            ->where('status', OrderStatus::Approved)
+            ->where(fn (Builder $orders) => $orders
+                ->where('product_id', $productId)
+                ->orWhereHas('items', fn (Builder $items) => $items->where('product_id', $productId)))
+            ->exists();
     }
 
     /**

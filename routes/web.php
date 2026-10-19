@@ -8,10 +8,12 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FunilFormularioController;
 use App\Http\Controllers\LessonAttachmentController;
 use App\Http\Controllers\LessonCompletionController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\LessonQuestionController;
+use App\Http\Controllers\Webhooks\EvolutionWebhookController;
 use App\Http\Controllers\Webhooks\HotmartWebhookController;
 use App\Http\Controllers\Webhooks\MercadoPagoWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +32,12 @@ Route::scopeBindings()->group(function () {
 
 Route::post('webhooks/mercadopago', MercadoPagoWebhookController::class)->name('webhooks.mercadopago');
 Route::post('webhooks/hotmart', HotmartWebhookController::class)->name('webhooks.hotmart');
+Route::post('webhooks/evolution', EvolutionWebhookController::class)->name('webhooks.evolution');
+
+// Landing page forms of the WhatsApp funnels (posted from WordPress).
+Route::post('funil/formulario', FunilFormularioController::class)
+    ->middleware('throttle:20,1')
+    ->name('funil.formulario');
 
 Route::middleware('guest')->group(function () {
     Route::get('entrar', [LoginController::class, 'create'])->name('login');
@@ -96,6 +104,27 @@ Route::middleware('auth')->group(function () {
         Route::get('ofertas/{offer}/editar', [Admin\ProductOfferController::class, 'edit'])->name('offers.edit');
         Route::put('ofertas/{offer}', [Admin\ProductOfferController::class, 'update'])->name('offers.update');
         Route::delete('ofertas/{offer}', [Admin\ProductOfferController::class, 'destroy'])->name('offers.destroy');
+
+        Route::resource('funis', Admin\FunilController::class)
+            ->except('show')
+            ->parameters(['funis' => 'funil'])
+            ->names('funis');
+
+        Route::post('funis/{funil}/gatilhos', [Admin\FunilGatilhoController::class, 'store'])->name('funil-gatilhos.store');
+        Route::put('gatilhos/{gatilho}', [Admin\FunilGatilhoController::class, 'update'])->name('funil-gatilhos.update');
+        Route::delete('gatilhos/{gatilho}', [Admin\FunilGatilhoController::class, 'destroy'])->name('funil-gatilhos.destroy');
+
+        Route::post('funis/{funil}/blocos', [Admin\FunilBlocoController::class, 'store'])->name('funil-blocos.store');
+        Route::put('funis/{funil}/blocos/ordem', [Admin\FunilBlocoController::class, 'reorder'])->name('funil-blocos.reorder');
+        Route::put('blocos/{bloco}', [Admin\FunilBlocoController::class, 'update'])->name('funil-blocos.update');
+        Route::patch('blocos/{bloco}/mover', [Admin\FunilBlocoController::class, 'move'])->name('funil-blocos.move');
+        Route::delete('blocos/{bloco}', [Admin\FunilBlocoController::class, 'destroy'])->name('funil-blocos.destroy');
+
+        Route::post('blocos/{bloco}/mensagens', [Admin\FunilMensagemController::class, 'store'])->name('funil-mensagens.store');
+        Route::put('blocos/{bloco}/mensagens/ordem', [Admin\FunilMensagemController::class, 'reorder'])->name('funil-mensagens.reorder');
+        Route::put('mensagens/{mensagem}', [Admin\FunilMensagemController::class, 'update'])->name('funil-mensagens.update');
+        Route::patch('mensagens/{mensagem}/mover', [Admin\FunilMensagemController::class, 'move'])->name('funil-mensagens.move');
+        Route::delete('mensagens/{mensagem}', [Admin\FunilMensagemController::class, 'destroy'])->name('funil-mensagens.destroy');
 
         Route::get('alunos', [Admin\StudentController::class, 'index'])->name('students.index');
         Route::get('alunos/novo', [Admin\StudentController::class, 'create'])->name('students.create');

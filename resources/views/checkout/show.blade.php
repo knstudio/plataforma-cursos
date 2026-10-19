@@ -38,6 +38,9 @@
     <form method="POST" novalidate
           action="{{ $offer ? route('checkout.offer.store', [$product, $offer]) : route('checkout.store', $product) }}">
         @csrf
+        @if (old('fi', $funilInscricaoId))
+            <input type="hidden" name="fi" value="{{ old('fi', $funilInscricaoId) }}">
+        @endif
 
         <div class="products">
             <div class="form-group">

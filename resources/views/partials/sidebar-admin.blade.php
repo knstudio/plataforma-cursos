@@ -16,6 +16,11 @@
                 <i class="sidebar-menu-icon sidebar-menu-icon--left material-icons">local_offer</i> Produtos
             </a>
         </li>
+        <li class="sidebar-menu-item {{ request()->routeIs('admin.funis.*') ? 'active' : '' }}">
+            <a class="sidebar-menu-button" href="{{ route('admin.funis.index') }}">
+                <i class="sidebar-menu-icon sidebar-menu-icon--left material-icons">chat</i> Funis WhatsApp
+            </a>
+        </li>
         <li class="sidebar-menu-item {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
             <a class="sidebar-menu-button" href="{{ route('admin.students.index') }}">
                 <i class="sidebar-menu-icon sidebar-menu-icon--left material-icons">people</i> Alunos

@@ -51,4 +51,10 @@ return [
         'hottok' => env('HOTMART_HOTTOK'),
     ],
 
+    'evolution' => [
+        // WhatsApp funnels: Evolution API server and its global API key.
+        'url' => env('EVOLUTION_URL'),
+        'api_key' => env('EVOLUTION_API_KEY'),
+    ],
+
 ];

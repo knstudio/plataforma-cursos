@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Str;
 
 /**
  * Key/value settings edited in Admin > Configurações (pixels, checkout footer, gateway credentials...).
@@ -19,7 +20,7 @@ class Setting extends Model
     /**
      * Credentials stored encrypted with APP_KEY and never shown back in the admin.
      */
-    public const SECRET_KEYS = ['mercadopago_access_token', 'mercadopago_webhook_secret', 'hotmart_hottok'];
+    public const SECRET_KEYS = ['mercadopago_access_token', 'mercadopago_webhook_secret', 'hotmart_hottok', 'evolution_api_key'];
 
     protected $primaryKey = 'key';
 
@@ -63,6 +64,21 @@ class Setting extends Model
         }
 
         Cache::forget(self::CACHE_KEY);
+    }
+
+    /**
+     * Token in the Evolution webhook URL (Evolution can't sign its calls). Created on first use.
+     */
+    public static function evolutionWebhookToken(): string
+    {
+        $token = static::value('evolution_webhook_token');
+
+        if (blank($token)) {
+            $token = Str::random(40);
+            static::store(['evolution_webhook_token' => $token]);
+        }
+
+        return $token;
     }
 
     /**

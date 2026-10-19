@@ -24,6 +24,8 @@ class CheckoutRequest extends FormRequest
             // IDs of the ticked order bumps; checked against the product's bumps in the controller.
             'order_bumps' => ['array'],
             'order_bumps.*' => ['integer'],
+            // WhatsApp funnel enrollment that sent the buyer here (ignored when unknown).
+            'fi' => ['nullable', 'integer'],
         ];
     }
 
@@ -55,6 +57,7 @@ class CheckoutRequest extends FormRequest
             'email_confirmation' => mb_strtolower(trim((string) $this->input('email_confirmation'))),
             'phone' => preg_replace('/\D/', '', (string) $this->input('phone')),
             'order_bumps' => array_values(array_filter((array) $this->input('order_bumps', []), 'is_numeric')),
+            'fi' => ctype_digit((string) $this->input('fi')) ? (int) $this->input('fi') : null,
         ]);
     }
 }

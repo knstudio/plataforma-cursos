@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentGateway;
 use App\Http\Requests\CheckoutRequest;
+use App\Models\FunilInscricao;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductOffer;
@@ -32,18 +33,20 @@ class CheckoutController extends Controller
     /**
      * Product checkout, optionally with a campaign offer (special price link).
      */
-    public function show(Product $product, ?ProductOffer $offer = null): View|RedirectResponse
+    public function show(Request $request, Product $product, ?ProductOffer $offer = null): View|RedirectResponse
     {
         abort_unless($product->is_active, 404);
 
         if ($offer && ! $offer->isAvailable()) {
-            return $this->offerUnavailable($product);
+            return $this->offerUnavailable($product, $request->query('fi'));
         }
 
         return view('checkout.show', [
             'product' => $product,
             'offer' => $offer,
             'bumps' => $product->checkoutBumps($offer),
+            // WhatsApp funnel links carry ?fi=<enrollment>, kept until the order is created.
+            'funilInscricaoId' => ctype_digit((string) $request->query('fi')) ? (int) $request->query('fi') : null,
         ]);
     }
 
@@ -57,7 +60,7 @@ class CheckoutController extends Controller
         abort_unless($product->is_active, 404);
 
         if ($offer && ! $offer->isAvailable()) {
-            return $this->offerUnavailable($product);
+            return $this->offerUnavailable($product, $request->validated('fi'));
         }
 
         // Only bumps this checkout really shows can be bought, at the price it shows.
@@ -87,6 +90,7 @@ class CheckoutController extends Controller
                 'user_id' => $user->id,
                 'product_id' => $product->id,
                 'product_offer_id' => $offer?->id,
+                'funil_inscricao_id' => FunilInscricao::query()->whereKey($request->validated('fi'))->value('id'),
                 'gateway' => PaymentGateway::MercadoPago,
                 'status' => OrderStatus::Pending,
                 'amount' => collect($items)->sum(fn (array $item) => (float) $item['unit_price']),
@@ -136,9 +140,9 @@ class CheckoutController extends Controller
     /**
      * Expired or disabled campaign links fall back to the regular checkout.
      */
-    private function offerUnavailable(Product $product): RedirectResponse
+    private function offerUnavailable(Product $product, int|string|null $funilInscricaoId = null): RedirectResponse
     {
-        return redirect()->route('checkout.show', $product)
+        return redirect()->route('checkout.show', array_filter(['product' => $product, 'fi' => $funilInscricaoId]))
             ->with('error', 'Esta oferta foi encerrada. Confira abaixo o valor atual.');
     }
 }

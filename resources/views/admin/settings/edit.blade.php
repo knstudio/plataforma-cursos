@@ -123,6 +123,33 @@
             </div>
         </div>
 
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">WhatsApp (Evolution API)</h4>
+                        <p class="card-subtitle">Usada pelos funis de WhatsApp para enviar as mensagens. A instância de cada funil é escolhida no próprio funil.</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label" for="evolution_url">URL da Evolution API</label>
+                            <input type="url" id="evolution_url" name="evolution_url" value="{{ old('evolution_url', $evolutionUrl) }}"
+                                   class="form-control @error('evolution_url') is-invalid @enderror" placeholder="https://evolution.seudominio.com.br">
+                            @error('evolution_url')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        @include('admin.settings._secret', $secretField('evolution_api_key', 'API key', 'A chave global (AUTHENTICATION_API_KEY) do servidor da Evolution.'))
+                        <div class="form-group mb-0">
+                            <label class="form-label">URL do webhook</label>
+                            <input type="text" class="form-control" value="{{ $evolutionWebhookUrl }}" readonly onclick="this.select()">
+                            <small class="form-text text-muted">Na instância da Evolution, cadastre esta URL com o evento <strong>MESSAGES_UPSERT</strong>. Ela já leva o código de segurança.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="text-right mb-4">
             <button type="submit" class="btn btn-success">Salvar</button>
         </div>

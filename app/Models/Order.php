@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
-#[Fillable(['user_id', 'product_id', 'product_offer_id', 'gateway', 'external_id', 'preference_id', 'payment_method', 'status', 'amount', 'paid_at', 'payload'])]
+#[Fillable(['user_id', 'product_id', 'product_offer_id', 'funil_inscricao_id', 'gateway', 'external_id', 'preference_id', 'payment_method', 'status', 'amount', 'paid_at', 'payload'])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
@@ -58,6 +58,16 @@ class Order extends Model
     public function offer(): BelongsTo
     {
         return $this->belongsTo(ProductOffer::class, 'product_offer_id');
+    }
+
+    /**
+     * WhatsApp funnel enrollment whose link led to this order, if any.
+     *
+     * @return BelongsTo<FunilInscricao, $this>
+     */
+    public function funilInscricao(): BelongsTo
+    {
+        return $this->belongsTo(FunilInscricao::class, 'funil_inscricao_id');
     }
 
     /**

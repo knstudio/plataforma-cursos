@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\Order;
 use App\Models\Product;
 use App\Notifications\AccessGranted;
+use App\Services\Funil\FunilCompras;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -18,6 +19,8 @@ use Throwable;
  */
 class OrderFulfillment
 {
+    public function __construct(private FunilCompras $funnels) {}
+
     /**
      * Mark the order as paid, grant its courses and e-mail the buyer.
      * Returns false when the order was already approved.
@@ -57,6 +60,13 @@ class OrderFulfillment
         // (the retry would find the order approved and never send the e-mail).
         try {
             $order->user->notify(new AccessGranted($order));
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
+        // Same for the WhatsApp funnels (move on from the bought product, start post-sale).
+        try {
+            $this->funnels->pedidoAprovado($order);
         } catch (Throwable $exception) {
             report($exception);
         }

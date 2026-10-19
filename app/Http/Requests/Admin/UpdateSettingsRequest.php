@@ -33,6 +33,8 @@ class UpdateSettingsRequest extends FormRequest
             'mercadopago_access_token' => ['nullable', 'string', 'max:255', 'regex:/^\S+$/'],
             'mercadopago_webhook_secret' => ['nullable', 'string', 'max:255', 'regex:/^\S+$/'],
             'hotmart_hottok' => ['nullable', 'string', 'max:255', 'regex:/^\S+$/'],
+            'evolution_url' => ['nullable', 'url', 'max:255'],
+            'evolution_api_key' => ['nullable', 'string', 'max:255', 'regex:/^\S+$/'],
             'clear_secrets' => ['array'],
             'clear_secrets.*' => [Rule::in(Setting::SECRET_KEYS)],
         ];
@@ -48,6 +50,7 @@ class UpdateSettingsRequest extends FormRequest
             'mercadopago_access_token.regex' => 'O Access Token não pode conter espaços.',
             'mercadopago_webhook_secret.regex' => 'A assinatura secreta não pode conter espaços.',
             'hotmart_hottok.regex' => 'O hottok não pode conter espaços.',
+            'evolution_api_key.regex' => 'A API key da Evolution não pode conter espaços.',
         ];
     }
 
@@ -64,6 +67,8 @@ class UpdateSettingsRequest extends FormRequest
             'mercadopago_access_token' => 'Access Token',
             'mercadopago_webhook_secret' => 'assinatura secreta',
             'hotmart_hottok' => 'hottok',
+            'evolution_url' => 'URL da Evolution API',
+            'evolution_api_key' => 'API key da Evolution',
         ];
     }
 
@@ -75,6 +80,7 @@ class UpdateSettingsRequest extends FormRequest
 
         $this->merge([
             'facebook_pixel_ids' => $this->normalizePixelIds($this->input('facebook_pixel_ids')),
+            'evolution_url' => filled($this->input('evolution_url')) ? rtrim(trim((string) $this->input('evolution_url')), '/') : null,
             ...$secrets,
         ]);
     }
