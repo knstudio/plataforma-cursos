@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Str;
 
 /**
  * Key/value settings edited in Admin > Configurações (pixels, checkout footer, gateway credentials...).
@@ -63,6 +64,22 @@ class Setting extends Model
         }
 
         Cache::forget(self::CACHE_KEY);
+    }
+
+    /**
+     * Bearer token of the purchase check API used by GoatFlow. Shown in the admin so it can be
+     * copied into the flow; created on first use, replaced with $renew.
+     */
+    public static function integrationApiToken(bool $renew = false): string
+    {
+        $token = static::value('integration_api_token');
+
+        if ($renew || blank($token)) {
+            $token = Str::random(48);
+            static::store(['integration_api_token' => $token]);
+        }
+
+        return $token;
     }
 
     /**

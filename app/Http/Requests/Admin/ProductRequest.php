@@ -49,6 +49,8 @@ class ProductRequest extends FormRequest
             'remove_checkout_banner' => ['boolean'],
             'checkout_timer_minutes' => ['nullable', 'integer', 'min:0', 'max:1440'],
             'facebook_pixel_ids' => ['nullable', 'string', 'max:500', 'regex:/^\d+(,\d+)*$/'],
+            // Called when an order with this product is approved (e.g. a GoatFlow post-sale flow).
+            'purchase_webhook_url' => ['nullable', 'url:http,https', 'max:500'],
         ];
     }
 
@@ -70,6 +72,7 @@ class ProductRequest extends FormRequest
             'checkout_banner_upload' => 'banner do checkout',
             'checkout_timer_minutes' => 'minutos do contador',
             'facebook_pixel_ids' => 'pixels do Facebook',
+            'purchase_webhook_url' => 'URL de aviso de compra',
         ];
     }
 
@@ -85,6 +88,7 @@ class ProductRequest extends FormRequest
             'checkout_timer_minutes' => filled($this->input('checkout_timer_minutes')) ? $this->input('checkout_timer_minutes') : 0,
             'hotmart_product_id' => filled($this->input('hotmart_product_id')) ? trim($this->input('hotmart_product_id')) : null,
             'access_days' => filled($this->input('access_days')) ? $this->input('access_days') : null,
+            'purchase_webhook_url' => filled($this->input('purchase_webhook_url')) ? trim($this->input('purchase_webhook_url')) : null,
         ]);
     }
 

@@ -165,6 +165,25 @@
             </div>
         </div>
 
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">Aviso de compra (WhatsApp)</h4>
+                <p class="card-subtitle">Quando uma compra deste produto é aprovada, a plataforma avisa esta URL com nome, telefone, e-mail e produto.</p>
+            </div>
+            <div class="card-body">
+                <div class="form-group mb-0">
+                    <label class="form-label" for="purchase_webhook_url">URL de aviso de compra</label>
+                    <input type="url" id="purchase_webhook_url" name="purchase_webhook_url"
+                           value="{{ old('purchase_webhook_url', $product->purchase_webhook_url) }}"
+                           class="form-control @error('purchase_webhook_url') is-invalid @enderror" placeholder="https://.../api/flows/hook/...">
+                    <small class="form-text text-muted">Opcional. Cole a URL Webhook do fluxo de pós-venda do GoatFlow (bloco Início). Vale também quando o produto é comprado como order bump.</small>
+                    @error('purchase_webhook_url')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
         @if ($product->exists)
             <div class="card">
                 <div class="card-header">

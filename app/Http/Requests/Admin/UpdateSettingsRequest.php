@@ -33,6 +33,7 @@ class UpdateSettingsRequest extends FormRequest
             'mercadopago_access_token' => ['nullable', 'string', 'max:255', 'regex:/^\S+$/'],
             'mercadopago_webhook_secret' => ['nullable', 'string', 'max:255', 'regex:/^\S+$/'],
             'hotmart_hottok' => ['nullable', 'string', 'max:255', 'regex:/^\S+$/'],
+            'renew_integration_token' => ['boolean'],
             'clear_secrets' => ['array'],
             'clear_secrets.*' => [Rule::in(Setting::SECRET_KEYS)],
         ];
@@ -75,6 +76,7 @@ class UpdateSettingsRequest extends FormRequest
 
         $this->merge([
             'facebook_pixel_ids' => $this->normalizePixelIds($this->input('facebook_pixel_ids')),
+            'renew_integration_token' => $this->boolean('renew_integration_token'),
             ...$secrets,
         ]);
     }
