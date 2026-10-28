@@ -175,7 +175,11 @@ class GoatflowIntegrationTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)->get(route('admin.products.edit', $this->essencial))->assertOk()->assertSee('URL de aviso de compra');
+        $this->actingAs($admin)->get(route('admin.products.edit', $this->essencial))
+            ->assertOk()
+            ->assertSee('URL de aviso de compra')
+            ->assertSee(route('api.funil.comprou').'?produto=treinamento-essencial&telefone={telefone}', false)
+            ->assertSee('Bearer '.$this->token);
 
         $this->actingAs($admin)->put(route('admin.products.update', $this->essencial), [
             'name' => $this->essencial->name,
