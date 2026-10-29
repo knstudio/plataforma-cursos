@@ -61,6 +61,9 @@ class OrderFulfillment
             report($exception);
         }
 
+        // Post-sale WhatsApp flows (GoatFlow), after the response so the gateway isn't kept waiting.
+        dispatch(fn () => app(PurchaseWebhookNotifier::class)->notify($order))->afterResponse();
+
         return true;
     }
 

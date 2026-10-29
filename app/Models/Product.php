@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
     'name', 'slug', 'description', 'price', 'access_days', 'hotmart_product_id', 'is_active',
-    'checkout_banner', 'checkout_timer_minutes', 'facebook_pixel_ids',
+    'checkout_banner', 'checkout_timer_minutes', 'facebook_pixel_ids', 'purchase_webhook_url',
 ])]
 class Product extends Model
 {

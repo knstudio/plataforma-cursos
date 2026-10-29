@@ -37,9 +37,31 @@
                     <li class="list-group-item d-flex"><span class="text-muted flex">Gateway</span> {{ $order->gateway->label() }}</li>
                     <li class="list-group-item d-flex"><span class="text-muted flex">Forma de pagamento</span> {{ $order->payment_method ?? '—' }}</li>
                     <li class="list-group-item d-flex"><span class="text-muted flex">ID da transação</span> {{ $order->external_id ?? '—' }}</li>
-                    <li class="list-group-item d-flex"><span class="text-muted flex">Criado em</span> {{ $order->created_at->format('d/m/Y H:i') }}</li>
-                    <li class="list-group-item d-flex"><span class="text-muted flex">Pago em</span> {{ $order->paid_at?->format('d/m/Y H:i') ?? '—' }}</li>
+                    <li class="list-group-item d-flex"><span class="text-muted flex">Criado em</span> {{ $order->created_at->format('d/m/Y H:i:s') }}</li>
+                    <li class="list-group-item d-flex"><span class="text-muted flex">Pago em</span> {{ $order->paid_at?->format('d/m/Y H:i:s') ?? '—' }}</li>
                 </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Alterar status manualmente</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Use quando o gateway não avisou (reembolso, chargeback) ou para um pedido de teste.
+                        Reembolsado, chargeback e cancelado tiram o acesso aos cursos deste pedido. Aprovado libera o acesso,
+                        manda o e-mail ao aluno e o aviso de compra (WhatsApp).</p>
+                    @foreach ($manualStatuses as $manualStatus)
+                        <form method="POST" action="{{ route('admin.orders.status', $order) }}" class="d-inline"
+                              onsubmit="return confirm('Marcar o pedido #{{ $order->id }} como {{ $manualStatus->label() }}?')">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="{{ $manualStatus->value }}">
+                            <button type="submit" class="btn {{ $manualStatus === \App\Enums\OrderStatus::Approved ? 'btn-success' : 'btn-outline-danger' }} mb-1">
+                                Marcar como {{ $manualStatus->label() }}
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
             </div>
 
             <div class="card">

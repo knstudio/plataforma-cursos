@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\ProductRequest;
 use App\Models\Course;
 use App\Models\OrderBump;
 use App\Models\Product;
+use App\Models\Setting;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -67,6 +68,7 @@ class ProductController extends Controller
             'product' => $product,
             'courses' => Course::query()->orderBy('title')->get(['id', 'title']),
             'bumpCandidates' => Product::query()->whereKeyNot($product->id)->orderBy('name')->get(['id', 'name']),
+            'integrationToken' => Setting::integrationApiToken(),
         ]);
     }
 

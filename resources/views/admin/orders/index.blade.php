@@ -68,7 +68,7 @@
                             <td>{{ $order->gateway->label() }}</td>
                             <td>@include('admin.orders._status', ['status' => $order->status])</td>
                             <td class="text-right">R$ {{ number_format($order->amount, 2, ',', '.') }}</td>
-                            <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
+                            <td>{{ $order->created_at->format('d/m/Y H:i:s') }}</td>
                         </tr>
                     @empty
                         <tr>

@@ -49,7 +49,7 @@
                             <td>{{ $student->email }}</td>
                             <td>{{ $student->phone ?? '—' }}</td>
                             <td class="text-center">{{ $student->active_enrollments_count }}</td>
-                            <td>{{ $student->created_at->format('d/m/Y') }}</td>
+                            <td>{{ $student->created_at->format('d/m/Y H:i:s') }}</td>
                             <td class="text-right">
                                 <a href="{{ route('admin.students.show', $student) }}" class="btn btn-white btn-sm"><i class="material-icons">edit</i></a>
                             </td>

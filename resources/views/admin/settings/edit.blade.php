@@ -123,6 +123,33 @@
             </div>
         </div>
 
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Integração com o GoatFlow (WhatsApp)</h4>
+                        <p class="card-subtitle">Os fluxos do GoatFlow perguntam aqui se um contato já comprou um produto (bloco "Requisição HTTP").</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">URL da consulta</label>
+                            <input type="text" class="form-control" readonly onclick="this.select()"
+                                   value="{{ route('api.funil.comprou') }}?produto=SLUG-DO-PRODUTO&telefone={telefone}">
+                            <small class="form-text text-muted">Troque SLUG-DO-PRODUTO pelo identificador do produto (o mesmo do link do checkout). Resposta: <code>{"comprou": true}</code> ou <code>{"comprou": false}</code>.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Header de autorização</label>
+                            <input type="text" class="form-control" readonly onclick="this.select()" value="Authorization: Bearer {{ $integrationToken }}">
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="renew_integration_token" name="renew_integration_token" value="1">
+                            <label class="custom-control-label" for="renew_integration_token">Gerar um token novo ao salvar (o antigo para de funcionar)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="text-right mb-4">
             <button type="submit" class="btn btn-success">Salvar</button>
         </div>

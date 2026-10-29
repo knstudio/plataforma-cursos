@@ -165,6 +165,66 @@
             </div>
         </div>
 
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">Aviso de compra (WhatsApp)</h4>
+                <p class="card-subtitle">Quando uma compra deste produto é aprovada, a plataforma avisa esta URL com nome, telefone, e-mail e produto.</p>
+            </div>
+            <div class="card-body">
+                <div class="form-group mb-0">
+                    <label class="form-label" for="purchase_webhook_url">URL de aviso de compra</label>
+                    <input type="url" id="purchase_webhook_url" name="purchase_webhook_url"
+                           value="{{ old('purchase_webhook_url', $product->purchase_webhook_url) }}"
+                           class="form-control @error('purchase_webhook_url') is-invalid @enderror" placeholder="https://.../api/flows/hook/...">
+                    <small class="form-text text-muted">Opcional. Cole a URL Webhook do fluxo de pós-venda do GoatFlow (bloco Início). Vale também quando o produto é comprado como order bump.</small>
+                    @error('purchase_webhook_url')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        @if ($product->exists && isset($integrationToken))
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Para o GoatFlow: "comprou este produto?"</h4>
+                    <p class="card-subtitle">Copie cada campo para o bloco <strong>Requisição HTTP</strong> do fluxo.</p>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Método</label>
+                        <input type="text" readonly class="form-control" value="GET" onclick="this.select()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">URL</label>
+                        <input type="text" readonly class="form-control" onclick="this.select()"
+                               value="{{ route('api.funil.comprou') }}?produto={{ $product->slug }}&telefone={telefone}">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-5">
+                            <label class="form-label">Header: Nome</label>
+                            <input type="text" readonly class="form-control" value="Authorization" onclick="this.select()">
+                        </div>
+                        <div class="form-group col-7">
+                            <label class="form-label">Header: Valor</label>
+                            <input type="text" readonly class="form-control" value="Bearer {{ $integrationToken }}" onclick="this.select()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-5 mb-0">
+                            <label class="form-label">Campo de decisão</label>
+                            <input type="text" readonly class="form-control" value="comprou" onclick="this.select()">
+                        </div>
+                        <div class="form-group col-7 mb-0">
+                            <label class="form-label">Valores = saídas</label>
+                            <input type="text" readonly class="form-control" value="true, false" onclick="this.select()">
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">Saída <strong>true</strong>: já comprou. <strong>false</strong>: ainda não comprou. Clique num campo para selecionar o texto.</small>
+                </div>
+            </div>
+        @endif
+
         @if ($product->exists)
             <div class="card">
                 <div class="card-header">

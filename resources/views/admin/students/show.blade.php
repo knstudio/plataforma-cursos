@@ -12,7 +12,7 @@
     <div class="media align-items-center mb-headings">
         <div class="media-body">
             <h1 class="h2 mb-0">{{ $student->name }}</h1>
-            <small class="text-muted">Cadastrado em {{ $student->created_at->format('d/m/Y H:i') }}</small>
+            <small class="text-muted">Cadastrado em {{ $student->created_at->format('d/m/Y H:i:s') }}</small>
         </div>
     </div>
 
@@ -139,7 +139,7 @@
                                     <td>{{ $order->gateway->label() }}</td>
                                     <td>@include('admin.orders._status', ['status' => $order->status])</td>
                                     <td class="text-right">R$ {{ number_format($order->amount, 2, ',', '.') }}</td>
-                                    <td>{{ $order->created_at->format('d/m/Y') }}</td>
+                                    <td>{{ $order->created_at->format('d/m/Y H:i:s') }}</td>
                                 </tr>
                             @empty
                                 <tr>

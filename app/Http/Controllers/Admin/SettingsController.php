@@ -27,13 +27,14 @@ class SettingsController extends Controller
             'supportEmail' => Setting::value('support_email', config('checkout.support_email')),
             'companyName' => Setting::value('company_name', config('checkout.company_name')),
             'companyDocument' => Setting::value('company_document', config('checkout.company_document')),
+            'integrationToken' => Setting::integrationApiToken(),
             'secrets' => collect(self::ENV_FALLBACKS)->map(fn (string $config, string $key) => $this->describeSecret($key, $config)),
         ]);
     }
 
     public function update(UpdateSettingsRequest $request): RedirectResponse
     {
-        $values = $request->safe()->except('clear_secrets');
+        $values = $request->safe()->except(['clear_secrets', 'renew_integration_token']);
         $clear = $request->validated('clear_secrets', []);
 
         foreach (Setting::SECRET_KEYS as $key) {
@@ -45,6 +46,10 @@ class SettingsController extends Controller
         }
 
         Setting::store($values);
+
+        if ($request->validated('renew_integration_token')) {
+            Setting::integrationApiToken(renew: true);
+        }
 
         return redirect()->route('admin.settings.edit')->with('status', 'Configurações salvas.');
     }
