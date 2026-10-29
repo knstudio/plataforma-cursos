@@ -20,6 +20,7 @@ class OrderFulfillment
 {
     /**
      * Mark the order as paid, grant its courses and e-mail the buyer.
+     * Products sold and delivered by Hotmart only get the order recorded (no courses, no e-mail).
      * Returns false when the order was already approved.
      */
     public function approve(Order $order, ?CarbonInterface $paidAt = null): bool
@@ -55,10 +56,12 @@ class OrderFulfillment
 
         // Access is already granted: a mail failure must not make the gateway retry
         // (the retry would find the order approved and never send the e-mail).
-        try {
-            $order->user->notify(new AccessGranted($order));
-        } catch (Throwable $exception) {
-            report($exception);
+        if (! $order->product?->delivered_by_hotmart) {
+            try {
+                $order->user->notify(new AccessGranted($order));
+            } catch (Throwable $exception) {
+                report($exception);
+            }
         }
 
         // Post-sale WhatsApp flows (GoatFlow), after the response so the gateway isn't kept waiting.

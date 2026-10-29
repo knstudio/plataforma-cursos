@@ -29,6 +29,18 @@ class ProductRequest extends FormRequest
         /** @var Product|null $product */
         $product = $this->route('product');
 
+        // Sold and delivered by Hotmart: only a record for the WhatsApp integration, no courses or checkout.
+        if ($this->boolean('delivered_by_hotmart')) {
+            return [
+                'name' => ['required', 'string', 'max:255'],
+                'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('products', 'slug')->ignore($product?->id)],
+                'hotmart_product_id' => ['required', 'string', 'max:50', Rule::unique('products', 'hotmart_product_id')->ignore($product?->id)],
+                'delivered_by_hotmart' => ['boolean'],
+                'is_active' => ['boolean'],
+                'purchase_webhook_url' => ['nullable', 'url:http,https', 'max:500'],
+            ];
+        }
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('products', 'slug')->ignore($product?->id)],
@@ -36,6 +48,7 @@ class ProductRequest extends FormRequest
             'price' => ['required', 'numeric', 'min:0', 'max:99999999'],
             'access_days' => ['nullable', 'integer', 'min:1', 'max:36500'],
             'hotmart_product_id' => ['nullable', 'string', 'max:50', Rule::unique('products', 'hotmart_product_id')->ignore($product?->id)],
+            'delivered_by_hotmart' => ['boolean'],
             'is_active' => ['boolean'],
             'course_ids' => ['required', 'array', 'min:1'],
             'course_ids.*' => ['integer', 'exists:courses,id'],
@@ -83,6 +96,7 @@ class ProductRequest extends FormRequest
             'price' => $this->decimal($this->input('price')),
             'bumps' => $this->bumpRows(),
             'is_active' => $this->boolean('is_active'),
+            'delivered_by_hotmart' => $this->boolean('delivered_by_hotmart'),
             'remove_checkout_banner' => $this->boolean('remove_checkout_banner'),
             'facebook_pixel_ids' => $this->normalizePixelIds($this->input('facebook_pixel_ids')),
             'checkout_timer_minutes' => filled($this->input('checkout_timer_minutes')) ? $this->input('checkout_timer_minutes') : 0,

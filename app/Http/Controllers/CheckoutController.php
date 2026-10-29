@@ -34,7 +34,7 @@ class CheckoutController extends Controller
      */
     public function show(Product $product, ?ProductOffer $offer = null): View|RedirectResponse
     {
-        abort_unless($product->is_active, 404);
+        abort_unless($product->is_active && ! $product->delivered_by_hotmart, 404);
 
         if ($offer && ! $offer->isAvailable()) {
             return $this->offerUnavailable($product);
@@ -54,7 +54,7 @@ class CheckoutController extends Controller
         Product $product,
         ?ProductOffer $offer = null,
     ): RedirectResponse {
-        abort_unless($product->is_active, 404);
+        abort_unless($product->is_active && ! $product->delivered_by_hotmart, 404);
 
         if ($offer && ! $offer->isAvailable()) {
             return $this->offerUnavailable($product);

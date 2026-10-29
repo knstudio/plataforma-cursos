@@ -1,5 +1,6 @@
 {{-- Shared product fields. Expects $product and $courses. --}}
 @php
+    $deliveredByHotmart = (bool) old('delivered_by_hotmart', $product->delivered_by_hotmart);
     $selectedCourses = collect(old('course_ids', $product->exists ? $product->courses->pluck('id')->all() : []))->map(fn ($id) => (int) $id);
 @endphp
 
@@ -10,6 +11,14 @@
                 <h4 class="card-title">Dados do produto</h4>
             </div>
             <div class="card-body">
+                <div class="custom-control custom-checkbox mb-3">
+                    <input type="checkbox" class="custom-control-input" id="delivered_by_hotmart" name="delivered_by_hotmart" value="1"
+                           @checked($deliveredByHotmart)>
+                    <label class="custom-control-label" for="delivered_by_hotmart"><strong>Vendido e entregue pela Hotmart</strong></label>
+                    <small class="form-text text-muted">Marque para cursos que a Hotmart vende e entrega (checkout e área de membros da Hotmart).
+                        Aqui fica só o registro das compras, para o WhatsApp saber quem comprou: sem curso, sem checkout e sem e-mail de acesso.</small>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label" for="name">Nome</label>
                     <input type="text" id="name" name="name" value="{{ old('name', $product->name) }}" required
@@ -29,6 +38,7 @@
                     @enderror
                 </div>
 
+                <div class="js-own-sale">
                 <div class="form-group">
                     <label class="form-label" for="description">Descrição</label>
                     <textarea id="description" name="description" rows="3"
@@ -57,12 +67,13 @@
                         @enderror
                     </div>
                 </div>
+                </div>
 
                 <div class="form-group">
                     <label class="form-label" for="hotmart_product_id">ID do produto na Hotmart</label>
                     <input type="text" id="hotmart_product_id" name="hotmart_product_id" value="{{ old('hotmart_product_id', $product->hotmart_product_id) }}"
                            class="form-control @error('hotmart_product_id') is-invalid @enderror" placeholder="Ex.: 1234567">
-                    <small class="form-text text-muted">Preencha se este produto também é vendido na Hotmart: o webhook usa esse ID para liberar o acesso.</small>
+                    <small class="form-text text-muted">Preencha se este produto é vendido na Hotmart: o webhook usa esse ID para registrar a compra (e liberar o acesso, se não for entregue pela Hotmart).</small>
                     @error('hotmart_product_id')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -87,7 +98,7 @@
                 : []);
         @endphp
 
-        <div class="card" id="order-bumps">
+        <div class="card js-own-sale" id="order-bumps">
             <div class="card-header d-flex align-items-center">
                 <div class="flex">
                     <h4 class="card-title">Order bumps</h4>
@@ -118,7 +129,7 @@
     </div>
 
     <div class="col-lg-4">
-        <div class="card">
+        <div class="card js-own-sale">
             <div class="card-header">
                 <h4 class="card-title">Aparência do checkout</h4>
             </div>
@@ -226,7 +237,7 @@
         @endif
 
         @if ($product->exists)
-            <div class="card">
+            <div class="card js-own-sale">
                 <div class="card-header">
                     <h4 class="card-title">Link do checkout</h4>
                     <p class="card-subtitle">Use no botão de compra da página de vendas.</p>
@@ -238,7 +249,7 @@
             </div>
         @endif
 
-        <div class="card">
+        <div class="card js-own-sale">
             <div class="card-header">
                 <h4 class="card-title">Cursos liberados</h4>
                 <p class="card-subtitle">Marque o que o comprador recebe.</p>
@@ -265,6 +276,22 @@
 
 @push('scripts')
     <script>
+        // "Vendido e entregue pela Hotmart" hides (and stops sending) what only matters for our own checkout.
+        (function () {
+            var toggle = document.getElementById('delivered_by_hotmart');
+            var apply = function () {
+                document.querySelectorAll('.js-own-sale').forEach(function (section) {
+                    section.hidden = toggle.checked;
+                    section.querySelectorAll('input, select, textarea, button').forEach(function (field) {
+                        field.disabled = toggle.checked;
+                    });
+                });
+            };
+
+            toggle.addEventListener('change', apply);
+            apply();
+        })();
+
         (function () {
             var card = document.getElementById('order-bumps');
             var rows = card.querySelector('.js-bump-rows');

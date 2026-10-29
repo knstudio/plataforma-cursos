@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
-    'name', 'slug', 'description', 'price', 'access_days', 'hotmart_product_id', 'is_active',
+    'name', 'slug', 'description', 'price', 'access_days', 'hotmart_product_id', 'delivered_by_hotmart', 'is_active',
     'checkout_banner', 'checkout_timer_minutes', 'facebook_pixel_ids', 'purchase_webhook_url',
 ])]
 class Product extends Model
@@ -29,6 +29,7 @@ class Product extends Model
             'price' => 'decimal:2',
             'access_days' => 'integer',
             'is_active' => 'boolean',
+            'delivered_by_hotmart' => 'boolean',
             'checkout_timer_minutes' => 'integer',
         ];
     }

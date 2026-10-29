@@ -40,9 +40,14 @@
                                     <br><small class="text-muted">Order bumps: {{ $product->orderBumps->map(fn ($bump) => $bump->bumpProduct?->name)->filter()->implode(', ') }}</small>
                                 @endif
                             </td>
-                            <td style="white-space: normal">{{ $product->courses->pluck('title')->implode(', ') }}</td>
-                            <td class="text-right">R$ {{ number_format($product->price, 2, ',', '.') }}</td>
-                            <td>{{ $product->access_days ? $product->access_days.' dias' : 'Vitalício' }}</td>
+                            @if ($product->delivered_by_hotmart)
+                                <td><span class="badge badge-warning">Vendido e entregue pela Hotmart</span></td>
+                                <td class="text-right">—</td>
+                            @else
+                                <td style="white-space: normal">{{ $product->courses->pluck('title')->implode(', ') }}</td>
+                                <td class="text-right">R$ {{ number_format($product->price, 2, ',', '.') }}</td>
+                            @endif
+                            <td>{{ $product->delivered_by_hotmart ? '—' : ($product->access_days ? $product->access_days.' dias' : 'Vitalício') }}</td>
                             <td>{{ $product->hotmart_product_id ?? '—' }}</td>
                             <td class="text-center">{{ $product->approved_orders_count }}</td>
                             <td>
@@ -53,7 +58,9 @@
                                 @endif
                             </td>
                             <td class="text-right">
-                                <a href="{{ route('checkout.show', $product) }}" target="_blank" class="btn btn-white btn-sm" title="Abrir checkout"><i class="material-icons">shopping_cart</i></a>
+                                @unless ($product->delivered_by_hotmart)
+                                    <a href="{{ route('checkout.show', $product) }}" target="_blank" class="btn btn-white btn-sm" title="Abrir checkout"><i class="material-icons">shopping_cart</i></a>
+                                @endunless
                                 <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-white btn-sm"><i class="material-icons">edit</i></a>
                             </td>
                         </tr>

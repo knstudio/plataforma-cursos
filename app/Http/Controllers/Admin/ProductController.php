@@ -35,7 +35,7 @@ class ProductController extends Controller
         return view('admin.products.create', [
             'product' => new Product(['is_active' => true, 'checkout_timer_minutes' => config('checkout.default_timer_minutes')]),
             'courses' => Course::query()->orderBy('title')->get(['id', 'title']),
-            'bumpCandidates' => Product::query()->orderBy('name')->get(['id', 'name']),
+            'bumpCandidates' => Product::query()->where('delivered_by_hotmart', false)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -43,7 +43,7 @@ class ProductController extends Controller
     {
         DB::transaction(function () use ($request): void {
             $product = Product::query()->create($this->productAttributes($request));
-            $product->courses()->sync($request->validated('course_ids'));
+            $product->courses()->sync($request->validated('course_ids', []));
             $this->syncOrderBumps($product, $request->validated('bumps', []));
         });
 
@@ -67,7 +67,7 @@ class ProductController extends Controller
         return view('admin.products.edit', [
             'product' => $product,
             'courses' => Course::query()->orderBy('title')->get(['id', 'title']),
-            'bumpCandidates' => Product::query()->whereKeyNot($product->id)->orderBy('name')->get(['id', 'name']),
+            'bumpCandidates' => Product::query()->whereKeyNot($product->id)->where('delivered_by_hotmart', false)->orderBy('name')->get(['id', 'name']),
             'integrationToken' => Setting::integrationApiToken(),
         ]);
     }
@@ -76,7 +76,7 @@ class ProductController extends Controller
     {
         DB::transaction(function () use ($request, $product): void {
             $product->update($this->productAttributes($request, $product));
-            $product->courses()->sync($request->validated('course_ids'));
+            $product->courses()->sync($request->validated('course_ids', []));
             $this->syncOrderBumps($product, $request->validated('bumps', []));
         });
 
@@ -118,6 +118,11 @@ class ProductController extends Controller
             $attributes['checkout_banner'] = $request->hasFile('checkout_banner_upload')
                 ? $request->file('checkout_banner_upload')->store('checkout', 'public')
                 : null;
+        }
+
+        // Hotmart charges and delivers: nothing is sold here, so no price or bumps of its own.
+        if ($request->validated('delivered_by_hotmart')) {
+            $attributes['price'] = 0;
         }
 
         return $attributes;

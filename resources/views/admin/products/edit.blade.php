@@ -25,7 +25,9 @@
         @include('admin.products._form')
     </form>
 
-    @include('admin.offers._list')
+    @unless ($product->delivered_by_hotmart)
+        @include('admin.offers._list')
+    @endunless
 
     <form method="POST" action="{{ route('admin.products.destroy', $product) }}" class="mb-4"
           onsubmit="return confirm('Excluir este produto?')">
