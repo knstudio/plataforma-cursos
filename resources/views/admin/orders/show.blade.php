@@ -37,8 +37,8 @@
                     <li class="list-group-item d-flex"><span class="text-muted flex">Gateway</span> {{ $order->gateway->label() }}</li>
                     <li class="list-group-item d-flex"><span class="text-muted flex">Forma de pagamento</span> {{ $order->payment_method ?? '—' }}</li>
                     <li class="list-group-item d-flex"><span class="text-muted flex">ID da transação</span> {{ $order->external_id ?? '—' }}</li>
-                    <li class="list-group-item d-flex"><span class="text-muted flex">Criado em</span> {{ $order->created_at->format('d/m/Y H:i') }}</li>
-                    <li class="list-group-item d-flex"><span class="text-muted flex">Pago em</span> {{ $order->paid_at?->format('d/m/Y H:i') ?? '—' }}</li>
+                    <li class="list-group-item d-flex"><span class="text-muted flex">Criado em</span> {{ $order->created_at->format('d/m/Y H:i:s') }}</li>
+                    <li class="list-group-item d-flex"><span class="text-muted flex">Pago em</span> {{ $order->paid_at?->format('d/m/Y H:i:s') ?? '—' }}</li>
                 </ul>
             </div>
 
