@@ -123,5 +123,6 @@ Route::middleware('auth')->group(function () {
         Route::get('pedidos', [Admin\OrderController::class, 'index'])->name('orders.index');
         Route::get('pedidos/{order}', [Admin\OrderController::class, 'show'])->name('orders.show');
         Route::post('pedidos/{order}/sincronizar', [Admin\OrderController::class, 'sync'])->name('orders.sync');
+        Route::patch('pedidos/{order}/status', [Admin\OrderController::class, 'updateStatus'])->name('orders.status');
     });
 });

@@ -8,9 +8,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\MercadoPago\MercadoPagoException;
 use App\Services\MercadoPago\MercadoPagoPaymentSync;
+use App\Services\OrderFulfillment;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class OrderController extends Controller
@@ -57,6 +59,7 @@ class OrderController extends Controller
 
         return view('admin.orders.show', [
             'order' => $order,
+            'manualStatuses' => self::manualStatusesFor($order),
         ]);
     }
 
@@ -78,5 +81,36 @@ class OrderController extends Controller
         }
 
         return back()->with('status', 'Pedido sincronizado. Status atual: '.$order->status->label().'.');
+    }
+
+    /**
+     * Manual status change, for refunds or chargebacks the gateway never reported (or a test order).
+     * Goes through OrderFulfillment, so access, e-mail and the GoatFlow notice behave as with a gateway.
+     */
+    public function updateStatus(Request $request, Order $order, OrderFulfillment $fulfillment): RedirectResponse
+    {
+        $status = OrderStatus::from($request->validate([
+            'status' => ['required', Rule::in(array_map(fn (OrderStatus $status) => $status->value, self::manualStatusesFor($order)))],
+        ])['status']);
+
+        match (true) {
+            $status === OrderStatus::Approved => $fulfillment->approve($order),
+            $order->status === OrderStatus::Approved => $fulfillment->reverse($order, $status),
+            default => $fulfillment->cancel($order),
+        };
+
+        return back()->with('status', 'Pedido marcado como '.$status->label().'.');
+    }
+
+    /**
+     * @return list<OrderStatus>
+     */
+    private static function manualStatusesFor(Order $order): array
+    {
+        return match ($order->status) {
+            OrderStatus::Approved => [OrderStatus::Refunded, OrderStatus::Chargeback, OrderStatus::Cancelled],
+            OrderStatus::Pending => [OrderStatus::Approved, OrderStatus::Cancelled],
+            default => [OrderStatus::Approved],
+        };
     }
 }
