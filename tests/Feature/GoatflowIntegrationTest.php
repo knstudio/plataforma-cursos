@@ -88,6 +88,21 @@ class GoatflowIntegrationTest extends TestCase
         $this->getJson(route('api.funil.comprou', ['produto' => 'treinamento-essencial', 'telefone' => '5582999991234']), ['Authorization' => 'Bearer '.$antigo])->assertUnauthorized();
     }
 
+    // ---- 2.3 Lista de produtos ----
+
+    public function test_product_list_for_the_goatflow_block(): void
+    {
+        Product::factory()->create(['name' => 'Apostila', 'slug' => 'apostila', 'is_active' => false]);
+
+        $this->getJson(route('api.funil.produtos'))->assertUnauthorized();
+        $this->getJson(route('api.funil.produtos'), ['Authorization' => 'Bearer '.$this->token])
+            ->assertOk()
+            ->assertExactJson(['produtos' => [
+                ['produto' => 'apostila', 'nome' => 'Apostila', 'ativo' => false],
+                ['produto' => 'treinamento-essencial', 'nome' => 'Treinamento Essencial', 'ativo' => true],
+            ]]);
+    }
+
     // ---- 2.2 Aviso de compra aprovada ----
 
     public function test_approved_order_posts_the_purchase_to_the_product_url(): void

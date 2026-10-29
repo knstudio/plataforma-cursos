@@ -83,6 +83,16 @@ class Setting extends Model
     }
 
     /**
+     * Whether the bearer token sent by GoatFlow matches the integration token.
+     */
+    public static function isValidIntegrationToken(?string $token): bool
+    {
+        $expected = (string) static::value('integration_api_token');
+
+        return $expected !== '' && hash_equals($expected, (string) $token);
+    }
+
+    /**
      * Facebook pixel IDs fired on every checkout.
      *
      * @return list<string>

@@ -21,9 +21,7 @@ class PurchaseCheckController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
-        $expected = (string) Setting::value('integration_api_token');
-
-        if ($expected === '' || ! hash_equals($expected, (string) $request->bearerToken())) {
+        if (! Setting::isValidIntegrationToken($request->bearerToken())) {
             return response()->json(['erro' => 'Token inválido.'], 401);
         }
 
